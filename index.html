@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z'ele Church - Escalas</title>
+    <meta name="application-name" content="Z'ele Church">
+    <meta name="apple-mobile-web-app-title" content="Z'ele Church">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#7c3aed">
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Configuração do Firebase (usar suas credenciais)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2j9f-qaqCqjxVaYON-oJ3Q06_XG0mjMw",
+            authDomain: "evomynd.firebaseapp.com",
+            projectId: "evomynd",
+            storageBucket: "evomynd.firebasestorage.app",
+            messagingSenderId: "267903971507",
+            appId: "1:267903971507:web:e85f8a9795dfa5056740c6"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseProvider = provider;
+        window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged };
+        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs };
+    </script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Tela de Loading -->
+    <div id="loading-screen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+        <div class="text-center text-white">
+            <h1 class="text-5xl font-bold mb-4">⛪ Z'ele Church</h1>
+            <p class="text-xl mb-8">Escalas de Voluntários</p>
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white mx-auto"></div>
+        </div>
+    </div>
+
+    <!-- Tela de Login -->
+    <div id="auth-screen" class="fixed inset-0 gradient-bg flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <h1 class="text-4xl font-bold text-purple-700 mb-2">⛪ Z'ele Church</h1>
+            <p class="text-gray-600 mb-8">Sistema de Escalas</p>
+            <button id="google-login-btn" class="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-3 shadow-lg">
+                <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Entrar com Google
+            </button>
+        </div>
+    </div>
+
+    <!-- App Principal -->
+    <div id="app-container" class="hidden">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-bold">⛪ Z'ele Church</h1>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-semibold" id="user-name">Usuário</p>
+                            <p class="text-xs opacity-90" id="user-email">email@example.com</p>
+                        </div>
+                        <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-white">
+                        <button id="logout-btn" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition font-semibold">
+                            Sair
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo Principal -->
+        <main class="container mx-auto px-4 py-8 max-w-6xl">
+            
+            <!-- Criar Nova Escala -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">➕ Criar Nova Escala</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data do Culto</label>
+                        <input type="date" id="culto-date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Horário do Culto</label>
+                        <input type="time" id="culto-time" value="10:00" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Escolha seu Time</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button class="team-btn bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="welcome">
+                            <div class="text-3xl mb-1">👋</div>
+                            <div>Welcome</div>
+                        </button>
+                        <button class="team-btn bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="backstage">
+                            <div class="text-3xl mb-1">🎵</div>
+                            <div>Backstage</div>
+                        </button>
+                        <button class="team-btn bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="parking">
+                            <div class="text-3xl mb-1">🚗</div>
+                            <div>Parking</div>
+                        </button>
+                        <button class="team-btn bg-gradient-to-br from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="kids">
+                            <div class="text-3xl mb-1">👶</div>
+                            <div>Kids</div>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="save-escala-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
+                    💾 Salvar Escala
+                </button>
+            </div>
+
+            <!-- Calendário/Lista de Escalas -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">📅 Minhas Escalas</h2>
+                <div id="escalas-list" class="space-y-4">
+                    <!-- Escalas serão inseridas aqui -->
+                </div>
+            </div>
+
+            <!-- Visão Geral (Admin) -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">👥 Visão Geral dos Times</h2>
+                <div id="admin-view" class="space-y-4">
+                    <!-- Visão geral será inserida aqui -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 App iniciando...');
+            
+            let currentUser = null;
+            let selectedTeam = null;
+            
+            // Elementos DOM
+            const elements = {
+                loadingScreen: document.getElementById('loading-screen'),
+                authScreen: document.getElementById('auth-screen'),
+                appContainer: document.getElementById('app-container'),
+                googleLoginBtn: document.getElementById('google-login-btn'),
+                logoutBtn: document.getElementById('logout-btn'),
+                userName: document.getElementById('user-name'),
+                userEmail: document.getElementById('user-email'),
+                userPhoto: document.getElementById('user-photo'),
+                cultoDate: document.getElementById('culto-date'),
+                cultoTime: document.getElementById('culto-time'),
+                saveEscalaBtn: document.getElementById('save-escala-btn'),
+                escalasList: document.getElementById('escalas-list'),
+                adminView: document.getElementById('admin-view'),
+                teamBtns: document.querySelectorAll('.team-btn')
+            };
+
+            // Configurar data mínima como hoje
+            const today = new Date().toISOString().split('T')[0];
+            elements.cultoDate.min = today;
+            elements.cultoDate.value = today;
+
+            // Seleção de time
+            elements.teamBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    elements.teamBtns.forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
+                    btn.classList.add('ring-4', 'ring-yellow-400');
+                    selectedTeam = btn.dataset.team;
+                });
+            });
+
+            // Login com Google
+            async function loginWithGoogle() {
+                try {
+                    console.log('🔐 Iniciando login...');
+                    const result = await window.firebaseAuthMethods.signInWithPopup(window.firebaseAuth, window.firebaseProvider);
+                    currentUser = result.user;
+                    console.log('✅ Login bem-sucedido:', currentUser.email);
+                } catch (error) {
+                    console.error('❌ Erro no login:', error);
+                    alert('Erro ao fazer login. Tente novamente.');
+                }
+            }
+
+            // Logout
+            async function logout() {
+                try {
+                    await window.firebaseAuthMethods.signOut(window.firebaseAuth);
+                    console.log('👋 Logout realizado');
+                } catch (error) {
+                    console.error('❌ Erro no logout:', error);
+                }
+            }
+
+            // Atualizar UI do usuário
+            function updateUserUI(user) {
+                if (user) {
+                    elements.userName.textContent = user.displayName || 'Usuário';
+                    elements.userEmail.textContent = user.email;
+                    elements.userPhoto.src = user.photoURL || '';
+                }
+            }
+
+            // Mostrar app
+            function showApp() {
+                elements.loadingScreen.style.display = 'none';
+                elements.authScreen.style.display = 'none';
+                elements.appContainer.classList.remove('hidden');
+            }
+
+            // Mostrar tela de login
+            function showLogin() {
+                elements.loadingScreen.style.display = 'none';
+                elements.authScreen.classList.remove('hidden');
+                elements.appContainer.classList.add('hidden');
+            }
+
+            // Salvar escala
+            async function saveEscala() {
+                if (!currentUser) {
+                    alert('Você precisa estar logado!');
+                    return;
+                }
+
+                const date = elements.cultoDate.value;
+                const time = elements.cultoTime.value;
+                const team = selectedTeam;
+
+                if (!date || !time || !team) {
+                    alert('Por favor, preencha todos os campos e selecione um time!');
+                    return;
+                }
+
+                try {
+                    // Verificar se já existe escala deste usuário para esta data
+                    const escalaId = `${currentUser.uid}_${date}`;
+                    const { doc, setDoc } = window.firestoreMethods;
+                    
+                    await setDoc(doc(window.firebaseDb, 'escalas', escalaId), {
+                        userId: currentUser.uid,
+                        userName: currentUser.displayName,
+                        userEmail: currentUser.email,
+                        userPhoto: currentUser.photoURL,
+                        date: date,
+                        time: time,
+                        team: team,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    console.log('✅ Escala salva com sucesso!');
+                    alert('✅ Escala salva com sucesso!\n\n💡 Deseja adicionar ao Google Calendar?');
+                    
+                    // Exportar para Google Calendar
+                    exportToGoogleCalendar(date, time, team);
+                    
+                    // Limpar seleção
+                    selectedTeam = null;
+                    elements.teamBtns.forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
+                    
+                    // Recarregar escalas
+                    loadUserEscalas();
+                    loadAllEscalas();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar escala:', error);
+                    alert('❌ Erro ao salvar escala. Tente novamente.');
+                }
+            }
+
+            // Exportar para Google Calendar
+            function exportToGoogleCalendar(date, time, team) {
+                const teamNames = {
+                    welcome: 'Welcome',
+                    backstage: 'Backstage',
+                    parking: 'Parking',
+                    kids: 'Kids'
+                };
+
+                const startDateTime = `${date}T${time}:00`;
+                const endDate = new Date(`${date}T${time}:00`);
+                endDate.setHours(endDate.getHours() + 2);
+                const endDateTime = endDate.toISOString().slice(0, 16);
+
+                const title = `Z'ele Church - ${teamNames[team]}`;
+                const description = `Escala voluntária no time ${teamNames[team]}`;
+                const location = 'Z\'ele Church';
+
+                const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+                
+                window.open(googleCalendarUrl, '_blank');
+            }
+
+            // Carregar escalas do usuário
+            async function loadUserEscalas() {
+                if (!currentUser) return;
+
+                try {
+                    const { collection, query, where, getDocs } = window.firestoreMethods;
+                    const q = query(
+                        collection(window.firebaseDb, 'escalas'),
+                        where('userId', '==', currentUser.uid)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    const escalas = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        escalas.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Ordenar por data
+                    escalas.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                    renderUserEscalas(escalas);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar escalas:', error);
+                }
+            }
+
+            // Renderizar escalas do usuário
+            function renderUserEscalas(escalas) {
+                const teamConfig = {
+                    welcome: { name: 'Welcome', icon: '👋', color: 'bg-blue-500' },
+                    backstage: { name: 'Backstage', icon: '🎵', color: 'bg-purple-500' },
+                    parking: { name: 'Parking', icon: '🚗', color: 'bg-green-500' },
+                    kids: { name: 'Kids', icon: '👶', color: 'bg-pink-500' }
+                };
+
+                if (escalas.length === 0) {
+                    elements.escalasList.innerHTML = '<p class="text-gray-500 text-center py-8">Você ainda não tem escalas agendadas.</p>';
+                    return;
+                }
+
+                const html = escalas.map(escala => {
+                    const config = teamConfig[escala.team];
+                    const dateObj = new Date(escala.date + 'T' + escala.time);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const timeStr = escala.time;
+
+                    return `
+                        <div class="border-l-4 ${config.color} bg-gray-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="text-3xl">${config.icon}</div>
+                                    <div>
+                                        <h3 class="font-bold text-lg">${config.name}</h3>
+                                        <p class="text-sm text-gray-600">📅 ${dateStr}</p>
+                                        <p class="text-sm text-gray-600">🕐 ${timeStr}</p>
+                                    </div>
+                                </div>
+                                <button class="export-calendar-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition" data-date="${escala.date}" data-time="${escala.time}" data-team="${escala.team}">
+                                    📆 Google Calendar
+                                button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                elements.escalasList.innerHTML = html;
+
+                // Event listeners para exportar
+                document.querySelectorAll('.export-calendar-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const date = e.currentTarget.dataset.date;
+                        const time = e.currentTarget.dataset.time;
+                        const team = e.currentTarget.dataset.team;
+                        exportToGoogleCalendar(date, time, team);
+                    });
+                });
+            }
+
+            // Carregar todas as escalas (visão admin)
+            async function loadAllEscalas() {
+                try {
+                    const { collection, getDocs } = window.firestoreMethods;
+                    const querySnapshot = await getDocs(collection(window.firebaseDb, 'escalas'));
+                    const escalas = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        escalas.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Agrupar por data e time
+                    const grouped = {};
+                    escalas.forEach(escala => {
+                        const key = `${escala.date}_${escala.time}`;
+                        if (!grouped[key]) {
+                            grouped[key] = {
+                                date: escala.date,
+                                time: escala.time,
+                                welcome: [],
+                                backstage: [],
+                                parking: [],
+                                kids: []
+                            };
+                        }
+                        grouped[key][escala.team].push(escala);
+                    });
+
+                    renderAdminView(grouped);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar visão geral:', error);
+                }
+            }
+
+            // Renderizar visão admin
+            function renderAdminView(grouped) {
+                const dates = Object.keys(grouped).sort();
+
+                if (dates.length === 0) {
+                    elements.adminView.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma escala cadastrada ainda.</p>';
+                    return;
+                }
+
+                const html = dates.map(key => {
+                    const data = grouped[key];
+                    const dateObj = new Date(data.date + 'T' + data.time);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                    return `
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-bold text-lg mb-3">📅 ${dateStr} - 🕐 ${data.time}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <div class="bg-blue-50 p-3 rounded">
+                                    <h4 class="font-semibold text-blue-700 mb-2">👋 Welcome (${data.welcome.length})</h4>
+                                    <div class="text-sm space-y-1">
+                                        ${data.welcome.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
+                                    </div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded">
+                                    <h4 class="font-semibold text-purple-700 mb-2">🎵 Backstage (${data.backstage.length})</h4>
+                                    <div class="text-sm space-y-1">
+                                        ${data.backstage.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
+                                    </div>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded">
+                                    <h4 class="font-semibold text-green-700 mb-2">🚗 Parking (${data.parking.length})</h4>
+                                    <div class="text-sm space-y-1">
+                                        ${data.parking.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
+                                    </div>
+                                </div>
+                                <div class="bg-pink-50 p-3 rounded">
+                                    <h4 class="font-semibold text-pink-700 mb-2">👶 Kids (${data.kids.length})</h4>
+                                    <div class="text-sm space-y-1">
+                                        ${data.kids.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                elements.adminView.innerHTML = html;
+            }
+
+            // Event Listeners
+            elements.googleLoginBtn.addEventListener('click', loginWithGoogle);
+            elements.logoutBtn.addEventListener('click', logout);
+            elements.saveEscalaBtn.addEventListener('click', saveEscala);
+
+            // Monitorar autenticação
+            window.firebaseAuthMethods.onAuthStateChanged(window.firebaseAuth, (user) => {
+                console.log('🔄 Estado de auth mudou:', user?.email || 'deslogado');
+                currentUser = user;
+
+                if (user) {
+                    updateUserUI(user);
+                    showApp();
+                    loadUserEscalas();
+                    loadAllEscalas();
+                } else {
+                    showLogin();
+                }
+            });
+
+            console.log('✅ App inicializado');
+        });
+    </script>
+</body>
+</html>
