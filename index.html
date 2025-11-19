@@ -19,7 +19,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -41,7 +41,7 @@
         window.firebaseDb = db;
         window.firebaseProvider = provider;
         window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged };
-        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs };
+        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc };
         
         console.log('✅ Firebase inicializado e exportado para window');
         window.firebaseReady = true;
@@ -118,6 +118,11 @@
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
             transform: translateY(-2px);
         }
+        .team-btn.selected {
+            background-color: #377db8;
+            border-color: #377db8;
+            box-shadow: 0 0 0 3px rgba(55, 125, 184, 0.3);
+        }
         .team-btn img {
             width: 100%;
             height: auto;
@@ -182,10 +187,8 @@
             
             <!-- Criar Nova Escala -->
             <div class="card-float rounded-xl p-6 mb-8">
-                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">➕ Criar Nova Escala</h2>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold mb-2" style="color: #151b29;">Selecione o Culto</label>
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-2" style="color: #151b29;">Selecionar o Culto que Vai Servir</h2>
                     <select id="culto-select" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 text-base" style="--tw-ring-color: #151b29; border-color: #e5e5e5;">
                         <option value="">Escolha uma data...</option>
                         <option value="2025-11-20|19:00|Quinta">20/11 Quinta (chegar 19h)</option>
@@ -462,8 +465,8 @@
             // Seleção de time
             elements.teamBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    elements.teamBtns.forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
-                    btn.classList.add('ring-4', 'ring-yellow-400');
+                    elements.teamBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
                     selectedTeam = btn.dataset.team;
                 });
             });
@@ -539,6 +542,13 @@
                 // Parsear os dados do culto (formato: "2024-11-20|19:00|Quinta")
                 const [date, time, eventName] = cultoData.split('|');
 
+                const teamNames = {
+                    welcome: 'Welcome',
+                    backstage: 'Backstage',
+                    parking: 'Parking',
+                    kids: 'Kids'
+                };
+
                 try {
                     // Verificar se já existe escala deste usuário para esta data
                     const escalaId = `${currentUser.uid}_${date}`;
@@ -550,31 +560,36 @@
                     
                     if (docSnap.exists()) {
                         const existingTeam = docSnap.data().team;
-                        const teamNames = {
-                            welcome: 'Welcome',
-                            backstage: 'Backstage',
-                            parking: 'Parking',
-                            kids: 'Kids'
-                        };
                         
-                        // Se for o mesmo time, apenas atualiza (por exemplo, mudança de horário)
+                        // Se for o mesmo time, apenas atualiza
                         if (existingTeam === team) {
-                            // Salvar diretamente
-                            await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                            // Mostrar confirmação antes de salvar
+                            showModal(
+                                `Confirmar escala no time ${teamNames[team]}?`,
+                                true,
+                                async () => {
+                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName, true);
+                                }
+                            );
                         } else {
                             // Times diferentes - pedir confirmação
                             showModal(
                                 `Você já escolheu servir no time ${teamNames[existingTeam]}. Deseja confirmar a mudança para o time ${teamNames[team]} nesta escala?`,
                                 true,
                                 async () => {
-                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName, false);
                                 }
                             );
-                            return; // Não continua - espera resposta do usuário
                         }
                     } else {
-                        // Nova escala - salvar diretamente
-                        await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                        // Nova escala - mostrar confirmação
+                        showModal(
+                            `Confirmar escala no time ${teamNames[team]}?`,
+                            true,
+                            async () => {
+                                await saveEscalaToFirestore(escalaId, date, time, team, eventName, false);
+                            }
+                        );
                     }
                     
                 } catch (error) {
@@ -584,7 +599,7 @@
             }
 
             // Função auxiliar para salvar no Firestore
-            async function saveEscalaToFirestore(escalaId, date, time, team, eventName) {
+            async function saveEscalaToFirestore(escalaId, date, time, team, eventName, skipCalendarPrompt) {
                 try {
                     const { doc, setDoc } = window.firestoreMethods;
                     
@@ -604,17 +619,15 @@
                     
                     // Limpar seleção
                     selectedTeam = null;
-                    elements.teamBtns.forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
+                    elements.teamBtns.forEach(b => b.classList.remove('selected'));
                     elements.cultoSelect.value = '';
                     
                     // Recarregar escalas
                     loadUserEscalas();
                     loadAllEscalas();
                     
-                    // Perguntar se deseja adicionar ao calendário
-                    showModal('Deseja adicionar ao seu calendário pessoal?', true, () => {
-                        exportToGoogleCalendar(date, time, team, eventName);
-                    });
+                    // Mostrar confirmação de sucesso
+                    showModal('Escala salva com sucesso!');
                     
                 } catch (error) {
                     console.error('❌ Erro ao salvar escala:', error);
@@ -770,6 +783,24 @@
                     renderAdminView(grouped);
                 } catch (error) {
                     console.error('❌ Erro ao carregar visão geral:', error);
+                }
+            }
+
+            // Deletar escala
+            async function deleteEscala(escalaId) {
+                try {
+                    const { doc, deleteDoc } = window.firestoreMethods;
+                    await deleteDoc(doc(window.firebaseDb, 'escalas', escalaId));
+                    
+                    console.log('✅ Escala deletada com sucesso!');
+                    showModal('Escala removida com sucesso!');
+                    
+                    // Recarregar escalas
+                    loadUserEscalas();
+                    loadAllEscalas();
+                } catch (error) {
+                    console.error('❌ Erro ao deletar escala:', error);
+                    showModal('Erro ao remover escala. Tente novamente.');
                 }
             }
 
