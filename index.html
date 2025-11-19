@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Z'ele Church">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0a0e1a">
+    <meta name="theme-color" content="#151b29">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlonZWxlIENodXJjaCAtIEVzY2FsYXMiLAogICJzaG9ydF9uYW1lIjogIlonZWxlIEVzY2FsYXMiLAogICJkZXNjcmlwdGlvbiI6ICJTZXJ2aXIgw6kgYSBsaW5ndWFnZW0gZG8gY8OpdSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2NkYzhjMCIsCiAgInRoZW1lX2NvbG9yIjogIiMxNTFiMjkiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vVm9sdW50ZWVyc1plbGUvZXNjYWxhL2Jsb2IvbWFpbi9Wb2x1bnRlZXJzJTIwbG9nby5wbmc/cmF3PXRydWUiLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9naXRodWIuY29tL1ZvbHVudGVlcnNaZWxlL2VzY2FsYS9ibG9iL21haW4vVm9sdW50ZWVycyUyMGxvZ28ucG5nP3Jhdz10cnVlIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
@@ -212,16 +212,24 @@
                 <div>
                     <label class="block text-sm font-semibold mb-2" style="color: #151b29;">Escolha seu Time</label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button class="team-btn rounded-lg" data-team="welcome">
+                        <button class="team-btn rounded-lg" data-team="welcome" 
+                                data-img-normal="https://github.com/VolunteersZele/escala/blob/main/Logo%20Welcome%20horizontal.png?raw=true"
+                                data-img-selected="https://github.com/VolunteersZele/escala/blob/main/Welcome%20azul%20claro.png?raw=true">
                             <img src="https://github.com/VolunteersZele/escala/blob/main/Logo%20Welcome%20horizontal.png?raw=true" alt="Welcome">
                         </button>
-                        <button class="team-btn rounded-lg" data-team="backstage">
+                        <button class="team-btn rounded-lg" data-team="backstage"
+                                data-img-normal="https://github.com/VolunteersZele/escala/blob/main/Logo%20Backstage%20horizontal.png?raw=true"
+                                data-img-selected="https://github.com/VolunteersZele/escala/blob/main/Backstage%20azul%20claro.png?raw=true">
                             <img src="https://github.com/VolunteersZele/escala/blob/main/Logo%20Backstage%20horizontal.png?raw=true" alt="Backstage">
                         </button>
-                        <button class="team-btn rounded-lg" data-team="parking">
+                        <button class="team-btn rounded-lg" data-team="parking"
+                                data-img-normal="https://github.com/VolunteersZele/escala/blob/main/Logo%20Parking%20horizontal.png?raw=true"
+                                data-img-selected="https://github.com/VolunteersZele/escala/blob/main/Parking%20azul%20claro.png?raw=true">
                             <img src="https://github.com/VolunteersZele/escala/blob/main/Logo%20Parking%20horizontal.png?raw=true" alt="Parking">
                         </button>
-                        <button class="team-btn rounded-lg" data-team="kids">
+                        <button class="team-btn rounded-lg" data-team="kids"
+                                data-img-normal="https://github.com/VolunteersZele/escala/blob/main/Logo%20Kids%20horizontal.png?raw=true"
+                                data-img-selected="https://github.com/VolunteersZele/escala/blob/main/Kids%20azul%20claro.png?raw=true">
                             <img src="https://github.com/VolunteersZele/escala/blob/main/Logo%20Kids%20horizontal.png?raw=true" alt="Kids">
                         </button>
                     </div>
@@ -465,10 +473,42 @@
             // Seleção de time
             elements.teamBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    elements.teamBtns.forEach(b => b.classList.remove('selected'));
+                    // Resetar todos os botões para imagem normal
+                    elements.teamBtns.forEach(b => {
+                        b.classList.remove('selected');
+                        const img = b.querySelector('img');
+                        const normalImg = b.dataset.imgNormal;
+                        if (img && normalImg) {
+                            img.src = normalImg;
+                        }
+                    });
+                    
+                    // Marcar botão clicado como selecionado e trocar imagem
                     btn.classList.add('selected');
+                    const img = btn.querySelector('img');
+                    const selectedImg = btn.dataset.imgSelected;
+                    if (img && selectedImg) {
+                        img.src = selectedImg;
+                    }
+                    
                     selectedTeam = btn.dataset.team;
                 });
+            });
+
+            // Resetar seleção de time quando trocar o culto
+            elements.cultoSelect.addEventListener('change', () => {
+                if (selectedTeam) {
+                    // Resetar todos os botões para imagem normal
+                    elements.teamBtns.forEach(btn => {
+                        btn.classList.remove('selected');
+                        const img = btn.querySelector('img');
+                        const normalImg = btn.dataset.imgNormal;
+                        if (img && normalImg) {
+                            img.src = normalImg;
+                        }
+                    });
+                    selectedTeam = null;
+                }
             });
 
             // Login com Google
@@ -617,12 +657,19 @@
 
                     console.log('✅ Escala salva com sucesso!');
                     
-                    // Limpar seleção
+                    // Limpar seleção e resetar imagens
                     selectedTeam = null;
-                    elements.teamBtns.forEach(b => b.classList.remove('selected'));
+                    elements.teamBtns.forEach(btn => {
+                        btn.classList.remove('selected');
+                        const img = btn.querySelector('img');
+                        const normalImg = btn.dataset.imgNormal;
+                        if (img && normalImg) {
+                            img.src = normalImg;
+                        }
+                    });
                     elements.cultoSelect.value = '';
                     
-                    // Recarregar escalas
+                    // Recarregar escalas e atualizar dropdown
                     loadUserEscalas();
                     loadAllEscalas();
                     
@@ -692,8 +739,57 @@
                     escalas.sort((a, b) => new Date(a.date) - new Date(b.date));
 
                     renderUserEscalas(escalas);
+                    updateCultoDropdown(escalas);
                 } catch (error) {
                     console.error('❌ Erro ao carregar escalas:', error);
+                }
+            }
+
+            // Atualizar dropdown removendo datas já escaladas
+            function updateCultoDropdown(escalas) {
+                // Obter todas as opções do select
+                const select = elements.cultoSelect;
+                const allOptions = [
+                    { value: "", text: "Escolha uma data..." },
+                    { value: "2025-11-20|19:00|Quinta", text: "20/11 Quinta (chegar 19h)" },
+                    { value: "2025-11-23|09:00|Domingo", text: "23/11 Domingo (chegar 09h)" },
+                    { value: "2025-11-27|19:00|Quinta", text: "27/11 Quinta (chegar 19h)" },
+                    { value: "2025-11-30|09:00|Domingo", text: "30/11 Domingo (chegar 09h)" },
+                    { value: "2025-12-04|19:00|Quinta", text: "04/12 Quinta (chegar 19h)" },
+                    { value: "2025-12-07|09:00|Domingo", text: "07/12 Domingo (chegar 09h)" },
+                    { value: "2025-12-11|19:00|Quinta - Pré Inauguração", text: "11/12 Quinta | Pré Inauguração (chegar 19h)" },
+                    { value: "2025-12-12|19:00|Sexta - Ensaio Geral", text: "12/12 Sexta | Ensaio Geral (chegar 19h)" },
+                    { value: "2025-12-13|00:00|Sábado - Inauguração", text: "13/12 Sábado | Inauguração (horário a definir)" },
+                    { value: "2025-12-14|09:00|Domingo - Batismo", text: "14/12 Domingo | Batismo (chegar 9h)" },
+                    { value: "2025-12-18|19:00|Quinta do Encontro", text: "18/12 Quinta do Encontro (chegar 19h)" },
+                    { value: "2025-12-21|09:00|Domingo", text: "21/12 Culto de Domingo (chegar 09h)" },
+                    { value: "2025-12-25|19:00|Quinta - Natal", text: "25/12 Quinta (chegar 19h)" },
+                    { value: "2025-12-28|09:00|Domingo", text: "28/12 Domingo (chegar 09h)" },
+                    { value: "2025-12-31|00:00|Culto da Virada", text: "31/12 Culto da Virada (horário a definir)" }
+                ];
+
+                // Criar set com datas já escaladas
+                const escaladasDates = new Set(escalas.map(e => e.date));
+
+                // Limpar select
+                select.innerHTML = '';
+
+                // Adicionar apenas opções não escaladas
+                allOptions.forEach(option => {
+                    if (option.value === "" || !escaladasDates.has(option.value.split('|')[0])) {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = option.value;
+                        optionElement.textContent = option.text;
+                        select.appendChild(optionElement);
+                    }
+                });
+
+                // Se não houver mais datas disponíveis
+                if (select.options.length === 1) {
+                    select.innerHTML = '<option value="">Todas as datas já estão escaladas</option>';
+                    select.disabled = true;
+                } else {
+                    select.disabled = false;
                 }
             }
 
@@ -730,7 +826,7 @@
                                     </div>
                                 </div>
                                 <button class="export-calendar-btn text-white px-4 py-2 rounded-lg transition zele-secondary zele-secondary-hover" data-date="${escala.date}" data-time="${escala.time}" data-team="${escala.team}" data-eventname="${escala.eventName || ''}">
-                                    � Google Calendar
+                                    📅 Google Calendar
                                 </button>
                             </div>
                         </div>
@@ -795,7 +891,7 @@
                     console.log('✅ Escala deletada com sucesso!');
                     showModal('Escala removida com sucesso!');
                     
-                    // Recarregar escalas
+                    // Recarregar escalas e atualizar dropdown
                     loadUserEscalas();
                     loadAllEscalas();
                 } catch (error) {
