@@ -250,7 +250,12 @@
 
             <!-- Calendário/Lista de Escalas -->
             <div class="card-float rounded-xl p-6">
-                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">📅 Minhas Escalas</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold" style="color: #151b29;">📅 Minhas Escalas</h2>
+                    <select id="filter-minhas-escalas" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" style="border-color: #e5e5e5;">
+                        <option value="">Todas as datas</option>
+                    </select>
+                </div>
                 <div id="escalas-list" class="space-y-4">
                     <!-- Escalas serão inseridas aqui -->
                 </div>
@@ -258,7 +263,12 @@
 
             <!-- Visão Geral (Admin) -->
             <div class="card-float rounded-xl p-6 mt-8">
-                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">👥 Visão Geral dos Times</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold" style="color: #151b29;">👥 Visão Geral dos Times</h2>
+                    <select id="filter-visao-geral" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" style="border-color: #e5e5e5;">
+                        <option value="">Todas as datas</option>
+                    </select>
+                </div>
                 <div id="admin-view" class="space-y-4">
                     <!-- Visão geral será inserida aqui -->
                 </div>
@@ -411,8 +421,14 @@
                 successModal: document.getElementById('success-modal'),
                 modalMessage: document.getElementById('modal-message'),
                 modalButtons: document.getElementById('modal-buttons'),
-                modalCloseBtn: document.getElementById('modal-close-btn')
+                modalCloseBtn: document.getElementById('modal-close-btn'),
+                filterMinhasEscalas: document.getElementById('filter-minhas-escalas'),
+                filterVisaoGeral: document.getElementById('filter-visao-geral')
             };
+            
+            // Variáveis para armazenar dados completos
+            let allUserEscalas = [];
+            let allEscalasGrouped = {};
 
             // Modal functions
             function showModal(message, showYesNo = false, onYes = null, isWarning = false) {
@@ -796,12 +812,46 @@
                     // Ordenar por data
                     escalas.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+                    // Armazenar todas as escalas
+                    allUserEscalas = escalas;
+                    
+                    // Atualizar filtro com datas disponíveis
+                    updateMinhasEscalasFilter(escalas);
+                    
                     renderUserEscalas(escalas);
                     updateCultoDropdown(escalas);
                 } catch (error) {
                     console.error('❌ Erro ao carregar escalas:', error);
                 }
             }
+            
+            // Atualizar filtro de Minhas Escalas
+            function updateMinhasEscalasFilter(escalas) {
+                const filter = elements.filterMinhasEscalas;
+                const uniqueDates = [...new Set(escalas.map(e => e.date))].sort();
+                
+                filter.innerHTML = '<option value="">Todas as datas</option>';
+                
+                uniqueDates.forEach(date => {
+                    const dateObj = new Date(date + 'T12:00:00');
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = dateStr;
+                    filter.appendChild(option);
+                });
+            }
+            
+            // Event listener para filtro de Minhas Escalas
+            elements.filterMinhasEscalas.addEventListener('change', () => {
+                const selectedDate = elements.filterMinhasEscalas.value;
+                if (selectedDate) {
+                    const filtered = allUserEscalas.filter(e => e.date === selectedDate);
+                    renderUserEscalas(filtered);
+                } else {
+                    renderUserEscalas(allUserEscalas);
+                }
+            });
 
             // Atualizar dropdown removendo datas já escaladas
             function updateCultoDropdown(escalas) {
@@ -874,13 +924,20 @@
 
                     return `
                         <div class="border-l-4 ${config.color} ${config.bg} p-4 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="text-3xl">${config.icon}</div>
-                                <div>
-                                    <h3 class="font-bold text-lg">${config.name}${eventNameDisplay}</h3>
-                                    <p class="text-sm text-gray-600">📅 ${dateStr}</p>
-                                    <p class="text-sm text-gray-600">🕐 ${timeStr}</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="text-3xl">${config.icon}</div>
+                                    <div>
+                                        <h3 class="font-bold text-lg">${config.name}${eventNameDisplay}</h3>
+                                        <p class="text-sm text-gray-600">📅 ${dateStr}</p>
+                                        <p class="text-sm text-gray-600">🕐 ${timeStr}</p>
+                                    </div>
                                 </div>
+                                <button class="delete-escala-btn text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition" data-escala-id="${escala.id}" title="Deletar escala">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -888,16 +945,18 @@
 
                 elements.escalasList.innerHTML = html;
 
-                // Event listeners para exportar (código mantido, mas botão removido da interface)
-                // document.querySelectorAll('.export-calendar-btn').forEach(btn => {
-                //     btn.addEventListener('click', (e) => {
-                //         const date = e.currentTarget.dataset.date;
-                //         const time = e.currentTarget.dataset.time;
-                //         const team = e.currentTarget.dataset.team;
-                //         const eventName = e.currentTarget.dataset.eventname || '';
-                //         exportToGoogleCalendar(date, time, team, eventName);
-                //     });
-                // });
+                // Event listeners para deletar
+                document.querySelectorAll('.delete-escala-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const escalaId = e.currentTarget.dataset.escalaId;
+                        showModal(
+                            'Tem certeza que deseja remover esta escala?',
+                            true,
+                            () => deleteEscala(escalaId),
+                            true
+                        );
+                    });
+                });
             }
 
             // Carregar todas as escalas (visão admin)
@@ -929,11 +988,46 @@
                         grouped[key][escala.team].push(escala);
                     });
 
+                    // Armazenar dados completos
+                    allEscalasGrouped = grouped;
+                    
+                    // Atualizar filtro
+                    updateVisaoGeralFilter(grouped);
+                    
                     renderAdminView(grouped);
                 } catch (error) {
                     console.error('❌ Erro ao carregar visão geral:', error);
                 }
             }
+            
+            // Atualizar filtro de Visão Geral
+            function updateVisaoGeralFilter(grouped) {
+                const filter = elements.filterVisaoGeral;
+                const dates = Object.keys(grouped).sort();
+                
+                filter.innerHTML = '<option value="">Todas as datas</option>';
+                
+                dates.forEach(key => {
+                    const data = grouped[key];
+                    const dateObj = new Date(data.date + 'T12:00:00');
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = dateStr;
+                    filter.appendChild(option);
+                });
+            }
+            
+            // Event listener para filtro de Visão Geral
+            elements.filterVisaoGeral.addEventListener('change', () => {
+                const selectedKey = elements.filterVisaoGeral.value;
+                if (selectedKey) {
+                    const filtered = { [selectedKey]: allEscalasGrouped[selectedKey] };
+                    renderAdminView(filtered);
+                } else {
+                    renderAdminView(allEscalasGrouped);
+                }
+            });
 
             // Deletar escala
             async function deleteEscala(escalaId) {
