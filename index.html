@@ -8,7 +8,12 @@
     <meta name="apple-mobile-web-app-title" content="Z'ele Church">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#FF6B35">
+    <meta name="theme-color" content="#0a0e1a">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlonZWxlIENodXJjaCAtIEVzY2FsYXMiLAogICJzaG9ydF9uYW1lIjogIlonZWxlIEVzY2FsYXMiLAogICJkZXNjcmlwdGlvbiI6ICJTZXJ2aXIgw6kgYSBsaW5ndWFnZW0gZG8gY8OpdSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGUxYSIsCiAgInRoZW1lX2NvbG9yIjogIiMwYTBlMWEiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL3plbGVjaHVyY2guY29tLmJyL2Fzc2V0cy9sb2dvLXdpdGhvdXQtYmFja2dyb3VuZC1Da2ZOcVFUXy5wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly96ZWxlY2h1cmNoLmNvbS5ici9hc3NldHMvbG9nby13aXRob3V0LWJhY2tncm91bmQtQ2tmTnFRVF8ucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
+    <link rel="apple-touch-icon" href="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png">
+    <link rel="icon" type="image/png" href="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png">
     
     <!-- Firebase SDKs -->
     <script type="module">
@@ -46,28 +51,60 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #FF6B35 0%, #2D1B4E 100%); }
-        .zele-orange { background-color: #FF6B35; }
-        .zele-orange-hover:hover { background-color: #FF5722; }
-        .zele-purple { background-color: #2D1B4E; }
-        .zele-purple-hover:hover { background-color: #1A0B2E; }
+        .zele-primary { background-color: #0a0e1a; }
+        .zele-secondary { background-color: #377db8; }
+        .zele-secondary-hover:hover { background-color: #2a6396; }
+        .zele-tertiary { background-color: #cdc8c0; }
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 9999; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .menu-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+        .menu-overlay.show { display: block; }
+        .menu-drawer {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease;
+            z-index: 9999;
+            overflow-y: auto;
+        }
+        .menu-drawer.show { right: 0; }
     </style>
 </head>
 <body class="bg-gray-50">
     
     <!-- Tela de Loading -->
-    <div id="loading-screen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+    <div id="loading-screen" class="fixed inset-0 zele-primary flex items-center justify-center z-50">
         <div class="text-center text-white">
-            <h1 class="text-5xl font-bold mb-4">⛪ Z'ele Church</h1>
+            <img src="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png" alt="Z'ele Church" class="w-32 h-32 mx-auto mb-4 object-contain">
+            <h1 class="text-5xl font-bold mb-4">Z'ele Church</h1>
             <p class="text-xl mb-8">Escalas de Voluntários</p>
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white mx-auto"></div>
         </div>
     </div>
 
     <!-- Tela de Login -->
-    <div id="auth-screen" class="fixed inset-0 gradient-bg flex items-center justify-center p-4 hidden">
+    <div id="auth-screen" class="fixed inset-0 zele-primary flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-            <h1 class="text-4xl font-bold text-orange-600 mb-2">⛪ Z'ele Church</h1>
+            <img src="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png" alt="Z'ele Church" class="w-24 h-24 mx-auto mb-4 object-contain">
+            <h1 class="text-4xl font-bold mb-2" style="color: #377db8;">Z'ele Church</h1>
             <p class="text-gray-600 mb-8">Sistema de Escalas</p>
             <button id="google-login-btn" class="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-3 shadow-lg">
                 <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -80,11 +117,12 @@
     <!-- App Principal -->
     <div id="app-container" class="hidden">
         <!-- Header -->
-        <header class="gradient-bg text-white shadow-lg">
+        <header class="zele-primary text-white shadow-lg">
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <h1 class="text-2xl font-bold">⛪ Z'ele Church</h1>
+                        <img src="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <h1 class="text-2xl font-bold">Z'ele Church</h1>
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="text-right hidden sm:block">
@@ -92,8 +130,10 @@
                             <p class="text-xs opacity-90" id="user-email">email@example.com</p>
                         </div>
                         <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-white">
-                        <button id="logout-btn" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition font-semibold">
-                            Sair
+                        <button id="menu-btn" class="zele-secondary zele-secondary-hover p-2 rounded-lg transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -107,40 +147,51 @@
             <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">➕ Criar Nova Escala</h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data do Culto</label>
-                        <input type="date" id="culto-date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Horário do Culto</label>
-                        <input type="time" id="culto-time" value="10:00" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Selecione o Culto</label>
+                    <select id="culto-select" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:border-blue-500 text-base" style="--tw-ring-color: #377db8;">
+                        <option value="">Escolha uma data...</option>
+                        <option value="2025-11-20|19:00|Quinta">20/11 Quinta (chegar 19h)</option>
+                        <option value="2025-11-23|09:00|Domingo">23/11 Domingo (chegar 09h)</option>
+                        <option value="2025-11-27|19:00|Quinta">27/11 Quinta (chegar 19h)</option>
+                        <option value="2025-11-30|09:00|Domingo">30/11 Domingo (chegar 09h)</option>
+                        <option value="2025-12-04|19:00|Quinta">04/12 Quinta (chegar 19h)</option>
+                        <option value="2025-12-07|09:00|Domingo">07/12 Domingo (chegar 09h)</option>
+                        <option value="2025-12-11|19:00|Quinta - Pré Inauguração">11/12 Quinta | Pré Inauguração (chegar 19h)</option>
+                        <option value="2025-12-12|19:00|Sexta - Ensaio Geral">12/12 Sexta | Ensaio Geral (chegar 19h)</option>
+                        <option value="2025-12-13|00:00|Sábado - Inauguração">13/12 Sábado | Inauguração (horário a definir)</option>
+                        <option value="2025-12-14|09:00|Domingo - Batismo">14/12 Domingo | Batismo (chegar 9h)</option>
+                        <option value="2025-12-18|19:00|Quinta do Encontro">18/12 Quinta do Encontro (chegar 19h)</option>
+                        <option value="2025-12-21|09:00|Domingo">21/12 Culto de Domingo (chegar 09h)</option>
+                        <option value="2025-12-25|19:00|Quinta - Natal">25/12 Quinta (chegar 19h)</option>
+                        <option value="2025-12-28|09:00|Domingo">28/12 Domingo (chegar 09h)</option>
+                        <option value="2025-12-31|00:00|Culto da Virada">31/12 Culto da Virada (horário a definir)</option>
+                    </select>
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Escolha seu Time</label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button class="team-btn bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="welcome">
+                        <button class="team-btn zele-secondary hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="welcome">
                             <div class="text-3xl mb-1">👋</div>
                             <div>Welcome</div>
                         </button>
-                        <button class="team-btn bg-gradient-to-br from-purple-900 to-purple-950 hover:from-purple-950 hover:to-black text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="backstage">
-                            <div class="text-3xl mb-1">🎵</div>
+                        <button class="team-btn zele-primary hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="backstage">
+                            <div class="text-3xl mb-1">🤝</div>
                             <div>Backstage</div>
                         </button>
-                        <button class="team-btn bg-gradient-to-br from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="parking">
+                        <button class="team-btn zele-secondary hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="parking">
                             <div class="text-3xl mb-1">🚗</div>
                             <div>Parking</div>
                         </button>
-                        <button class="team-btn bg-gradient-to-br from-purple-800 to-orange-500 hover:from-purple-900 hover:to-orange-600 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="kids">
+                        <button class="team-btn zele-primary hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-md transition transform hover:scale-105" data-team="kids">
                             <div class="text-3xl mb-1">👶</div>
                             <div>Kids</div>
                         </button>
                     </div>
                 </div>
 
-                <button id="save-escala-btn" class="w-full text-white font-bold py-3 px-6 rounded-lg transition shadow-lg zele-orange zele-orange-hover mt-4">
+                <button id="save-escala-btn" class="w-full text-white font-bold py-3 px-6 rounded-lg transition shadow-lg zele-secondary zele-secondary-hover mt-4">
                     💾 Salvar Escala
                 </button>
             </div>
@@ -162,6 +213,79 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- Menu Lateral -->
+    <div id="menu-overlay" class="menu-overlay"></div>
+    <div id="menu-drawer" class="menu-drawer">
+        <div class="p-6">
+            <!-- Header do Menu -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <img src="https://zelechurch.com.br/assets/logo-without-background-CkfNqQT_.png" alt="Logo" class="w-12 h-12 object-contain">
+                    <h2 class="text-xl font-bold" style="color: #0a0e1a;">Menu</h2>
+                </div>
+                <button id="menu-close-btn" class="text-gray-600 hover:text-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- User Info -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <img id="menu-user-photo" src="" alt="Foto" class="w-16 h-16 rounded-full">
+                    <div>
+                        <p class="font-semibold text-gray-800" id="menu-user-name">Usuário</p>
+                        <p class="text-sm text-gray-600" id="menu-user-email">email@example.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Items -->
+            <div class="space-y-2">
+                <button id="install-app-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left" style="display: none;">
+                    <svg class="w-6 h-6" style="color: #377db8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-gray-800">Instalar App</p>
+                        <p class="text-xs text-gray-600">Adicionar à tela inicial</p>
+                    </div>
+                </button>
+
+                <button id="menu-logout-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-gray-800">Sair</p>
+                        <p class="text-xs text-gray-600">Fazer logout</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Versão -->
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
+                <p>Z'ele Church Escalas v1.0</p>
+                <p class="mt-1">Servir é a linguagem do céu</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sucesso -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="mb-4 text-6xl">✅</div>
+            <h2 class="text-2xl font-bold mb-2" style="color: #377db8;">Escala Volunteers Z'ele Church</h2>
+            <p class="text-gray-600 mb-6" id="modal-message">Escala salva com sucesso!</p>
+            <div id="modal-buttons" class="flex gap-3">
+                <button id="modal-close-btn" class="flex-1 zele-secondary zele-secondary-hover text-white font-bold py-3 px-6 rounded-lg transition">
+                    OK
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -189,22 +313,118 @@
                 authScreen: document.getElementById('auth-screen'),
                 appContainer: document.getElementById('app-container'),
                 googleLoginBtn: document.getElementById('google-login-btn'),
-                logoutBtn: document.getElementById('logout-btn'),
+                menuBtn: document.getElementById('menu-btn'),
+                menuOverlay: document.getElementById('menu-overlay'),
+                menuDrawer: document.getElementById('menu-drawer'),
+                menuCloseBtn: document.getElementById('menu-close-btn'),
+                menuLogoutBtn: document.getElementById('menu-logout-btn'),
+                installAppBtn: document.getElementById('install-app-btn'),
+                menuUserName: document.getElementById('menu-user-name'),
+                menuUserEmail: document.getElementById('menu-user-email'),
+                menuUserPhoto: document.getElementById('menu-user-photo'),
                 userName: document.getElementById('user-name'),
                 userEmail: document.getElementById('user-email'),
                 userPhoto: document.getElementById('user-photo'),
-                cultoDate: document.getElementById('culto-date'),
-                cultoTime: document.getElementById('culto-time'),
+                cultoSelect: document.getElementById('culto-select'),
                 saveEscalaBtn: document.getElementById('save-escala-btn'),
                 escalasList: document.getElementById('escalas-list'),
                 adminView: document.getElementById('admin-view'),
-                teamBtns: document.querySelectorAll('.team-btn')
+                teamBtns: document.querySelectorAll('.team-btn'),
+                successModal: document.getElementById('success-modal'),
+                modalMessage: document.getElementById('modal-message'),
+                modalButtons: document.getElementById('modal-buttons'),
+                modalCloseBtn: document.getElementById('modal-close-btn')
             };
 
-            // Configurar data mínima como hoje
-            const today = new Date().toISOString().split('T')[0];
-            elements.cultoDate.min = today;
-            elements.cultoDate.value = today;
+            // Modal functions
+            function showModal(message, showYesNo = false, onYes = null) {
+                elements.modalMessage.textContent = message;
+                
+                if (showYesNo && onYes) {
+                    // Modal com Sim/Não
+                    elements.modalButtons.innerHTML = `
+                        <button id="modal-no-btn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition">
+                            Não
+                        </button>
+                        <button id="modal-yes-btn" class="flex-1 zele-secondary zele-secondary-hover text-white font-bold py-3 px-6 rounded-lg transition">
+                            Sim
+                        </button>
+                    `;
+                    
+                    document.getElementById('modal-yes-btn').addEventListener('click', () => {
+                        closeModal();
+                        onYes();
+                    });
+                    
+                    document.getElementById('modal-no-btn').addEventListener('click', closeModal);
+                } else {
+                    // Modal apenas com OK
+                    elements.modalButtons.innerHTML = `
+                        <button id="modal-close-btn" class="flex-1 zele-secondary zele-secondary-hover text-white font-bold py-3 px-6 rounded-lg transition">
+                            OK
+                        </button>
+                    `;
+                    
+                    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+                }
+                
+                elements.successModal.classList.add('show');
+            }
+
+            function closeModal() {
+                elements.successModal.classList.remove('show');
+            }
+
+            elements.successModal.addEventListener('click', (e) => {
+                if (e.target === elements.successModal) {
+                    closeModal();
+                }
+            });
+
+            // Menu functions
+            function openMenu() {
+                elements.menuOverlay.classList.add('show');
+                elements.menuDrawer.classList.add('show');
+            }
+
+            function closeMenu() {
+                elements.menuOverlay.classList.remove('show');
+                elements.menuDrawer.classList.remove('show');
+            }
+
+            elements.menuBtn.addEventListener('click', openMenu);
+            elements.menuCloseBtn.addEventListener('click', closeMenu);
+            elements.menuOverlay.addEventListener('click', closeMenu);
+            elements.menuLogoutBtn.addEventListener('click', () => {
+                closeMenu();
+                logout();
+            });
+
+            // PWA Install
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                elements.installAppBtn.style.display = 'block';
+            });
+
+            elements.installAppBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) {
+                    showModal('App já está instalado ou não pode ser instalado neste dispositivo.');
+                    return;
+                }
+
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    showModal('App instalado com sucesso!');
+                    elements.installAppBtn.style.display = 'none';
+                }
+                
+                deferredPrompt = null;
+                closeMenu();
+            });
 
             // Seleção de time
             elements.teamBtns.forEach(btn => {
@@ -248,6 +468,9 @@
                     elements.userName.textContent = user.displayName || 'Usuário';
                     elements.userEmail.textContent = user.email;
                     elements.userPhoto.src = user.photoURL || '';
+                    elements.menuUserName.textContent = user.displayName || 'Usuário';
+                    elements.menuUserEmail.textContent = user.email;
+                    elements.menuUserPhoto.src = user.photoURL || '';
                 }
             }
 
@@ -268,22 +491,68 @@
             // Salvar escala
             async function saveEscala() {
                 if (!currentUser) {
-                    alert('Você precisa estar logado!');
+                    showModal('Você precisa estar logado!');
                     return;
                 }
 
-                const date = elements.cultoDate.value;
-                const time = elements.cultoTime.value;
+                const cultoData = elements.cultoSelect.value;
                 const team = selectedTeam;
 
-                if (!date || !time || !team) {
-                    alert('Por favor, preencha todos os campos e selecione um time!');
+                if (!cultoData || !team) {
+                    showModal('Por favor, selecione um culto e um time!');
                     return;
                 }
+
+                // Parsear os dados do culto (formato: "2024-11-20|19:00|Quinta")
+                const [date, time, eventName] = cultoData.split('|');
 
                 try {
                     // Verificar se já existe escala deste usuário para esta data
                     const escalaId = `${currentUser.uid}_${date}`;
+                    const { doc, getDoc, setDoc } = window.firestoreMethods;
+                    
+                    // Buscar escala existente
+                    const docRef = doc(window.firebaseDb, 'escalas', escalaId);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        const existingTeam = docSnap.data().team;
+                        const teamNames = {
+                            welcome: 'Welcome',
+                            backstage: 'Backstage',
+                            parking: 'Parking',
+                            kids: 'Kids'
+                        };
+                        
+                        // Se for o mesmo time, apenas atualiza (por exemplo, mudança de horário)
+                        if (existingTeam === team) {
+                            // Salvar diretamente
+                            await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                        } else {
+                            // Times diferentes - pedir confirmação
+                            showModal(
+                                `Você já escolheu servir no time ${teamNames[existingTeam]}. Deseja confirmar a mudança para o time ${teamNames[team]} nesta escala?`,
+                                true,
+                                async () => {
+                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                                }
+                            );
+                            return; // Não continua - espera resposta do usuário
+                        }
+                    } else {
+                        // Nova escala - salvar diretamente
+                        await saveEscalaToFirestore(escalaId, date, time, team, eventName);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar escala:', error);
+                    showModal('Erro ao salvar escala. Tente novamente.');
+                }
+            }
+
+            // Função auxiliar para salvar no Firestore
+            async function saveEscalaToFirestore(escalaId, date, time, team, eventName) {
+                try {
                     const { doc, setDoc } = window.firestoreMethods;
                     
                     await setDoc(doc(window.firebaseDb, 'escalas', escalaId), {
@@ -294,31 +563,35 @@
                         date: date,
                         time: time,
                         team: team,
+                        eventName: eventName || '',
                         createdAt: new Date().toISOString()
                     });
 
                     console.log('✅ Escala salva com sucesso!');
-                    alert('✅ Escala salva com sucesso!\n\n💡 Deseja adicionar ao Google Calendar?');
-                    
-                    // Exportar para Google Calendar
-                    exportToGoogleCalendar(date, time, team);
                     
                     // Limpar seleção
                     selectedTeam = null;
                     elements.teamBtns.forEach(b => b.classList.remove('ring-4', 'ring-yellow-400'));
+                    elements.cultoSelect.value = '';
                     
                     // Recarregar escalas
                     loadUserEscalas();
                     loadAllEscalas();
                     
+                    // Perguntar se deseja adicionar ao calendário
+                    showModal('Deseja adicionar ao seu calendário pessoal?', true, () => {
+                        exportToGoogleCalendar(date, time, team, eventName);
+                    });
+                    
                 } catch (error) {
                     console.error('❌ Erro ao salvar escala:', error);
-                    alert('❌ Erro ao salvar escala. Tente novamente.');
+                    showModal('Erro ao salvar escala. Tente novamente.');
+                    throw error;
                 }
             }
 
             // Exportar para Google Calendar
-            function exportToGoogleCalendar(date, time, team) {
+            function exportToGoogleCalendar(date, time, team, eventName) {
                 const teamNames = {
                     welcome: 'Welcome',
                     backstage: 'Backstage',
@@ -326,18 +599,57 @@
                     kids: 'Kids'
                 };
 
-                const startDateTime = `${date}T${time}:00`;
-                const endDate = new Date(`${date}T${time}:00`);
+                const startDateTime = new Date(`${date}T${time}:00`);
+                const endDate = new Date(startDateTime);
                 endDate.setHours(endDate.getHours() + 2);
-                const endDateTime = endDate.toISOString().slice(0, 16);
 
-                const title = `Z'ele Church - ${teamNames[team]}`;
-                const description = `Escala voluntária no time ${teamNames[team]}`;
-                const location = 'Z\'ele Church';
+                const title = `Z'ele Church - ${teamNames[team]}${eventName ? ' - ' + eventName : ''}`;
+                const description = `Escala voluntária no time ${teamNames[team]}${eventName ? '\nEvento: ' + eventName : ''}`;
+                const location = 'Z\'ele Church - Av. Jacu Pêssego, 7639';
 
-                const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+                // Criar arquivo ICS (compatível com Google Calendar, iOS Calendar, Outlook, etc.)
+                const icsContent = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//Z\'ele Church//Escalas//PT',
+                    'CALSCALE:GREGORIAN',
+                    'METHOD:PUBLISH',
+                    'BEGIN:VEVENT',
+                    `DTSTART:${formatICSDate(startDateTime)}`,
+                    `DTEND:${formatICSDate(endDate)}`,
+                    `SUMMARY:${title}`,
+                    `DESCRIPTION:${description}`,
+                    `LOCATION:${location}`,
+                    `UID:${Date.now()}@zelechurch.com.br`,
+                    'STATUS:CONFIRMED',
+                    'SEQUENCE:0',
+                    'END:VEVENT',
+                    'END:VCALENDAR'
+                ].join('\r\n');
+
+                // Criar blob e baixar
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `zele-church-${team}-${date}.ics`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
                 
-                window.open(googleCalendarUrl, '_blank');
+                // Mostrar confirmação
+                showModal('Arquivo .ics baixado! Abra o arquivo para adicionar ao seu calendário.');
+            }
+
+            // Formatar data para ICS (formato: YYYYMMDDTHHmmss)
+            function formatICSDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                return `${year}${month}${day}T${hours}${minutes}${seconds}`;
             }
 
             // Carregar escalas do usuário
@@ -370,10 +682,10 @@
             // Renderizar escalas do usuário
             function renderUserEscalas(escalas) {
                 const teamConfig = {
-                    welcome: { name: 'Welcome', icon: '👋', color: 'bg-orange-500' },
-                    backstage: { name: 'Backstage', icon: '🎵', color: 'bg-purple-900' },
-                    parking: { name: 'Parking', icon: '🚗', color: 'bg-orange-600' },
-                    kids: { name: 'Kids', icon: '👶', color: 'bg-purple-800' }
+                    welcome: { name: 'Welcome', icon: '👋', color: 'border-[#377db8]', bg: 'bg-blue-50' },
+                    backstage: { name: 'Backstage', icon: '🤝', color: 'border-[#0a0e1a]', bg: 'bg-gray-50' },
+                    parking: { name: 'Parking', icon: '🚗', color: 'border-[#377db8]', bg: 'bg-blue-50' },
+                    kids: { name: 'Kids', icon: '👶', color: 'border-[#0a0e1a]', bg: 'bg-gray-50' }
                 };
 
                 if (escalas.length === 0) {
@@ -386,20 +698,21 @@
                     const dateObj = new Date(escala.date + 'T' + escala.time);
                     const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const timeStr = escala.time;
+                    const eventNameDisplay = escala.eventName ? ` - ${escala.eventName}` : '';
 
                     return `
-                        <div class="border-l-4 ${config.color} bg-gray-50 p-4 rounded-lg">
+                        <div class="border-l-4 ${config.color} ${config.bg} p-4 rounded-lg">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="text-3xl">${config.icon}</div>
                                     <div>
-                                        <h3 class="font-bold text-lg">${config.name}</h3>
+                                        <h3 class="font-bold text-lg">${config.name}${eventNameDisplay}</h3>
                                         <p class="text-sm text-gray-600">📅 ${dateStr}</p>
                                         <p class="text-sm text-gray-600">🕐 ${timeStr}</p>
                                     </div>
                                 </div>
-                                <button class="export-calendar-btn text-white px-4 py-2 rounded-lg transition zele-orange zele-orange-hover" data-date="${escala.date}" data-time="${escala.time}" data-team="${escala.team}">
-                                    📆 Google Calendar
+                                <button class="export-calendar-btn text-white px-4 py-2 rounded-lg transition zele-secondary zele-secondary-hover" data-date="${escala.date}" data-time="${escala.time}" data-team="${escala.team}" data-eventname="${escala.eventName || ''}">
+                                    📅 Adicionar ao Calendário
                                 </button>
                             </div>
                         </div>
@@ -414,7 +727,8 @@
                         const date = e.currentTarget.dataset.date;
                         const time = e.currentTarget.dataset.time;
                         const team = e.currentTarget.dataset.team;
-                        exportToGoogleCalendar(date, time, team);
+                        const eventName = e.currentTarget.dataset.eventname || '';
+                        exportToGoogleCalendar(date, time, team, eventName);
                     });
                 });
             }
@@ -438,6 +752,7 @@
                             grouped[key] = {
                                 date: escala.date,
                                 time: escala.time,
+                                eventName: escala.eventName || '',
                                 welcome: [],
                                 backstage: [],
                                 parking: [],
@@ -466,31 +781,32 @@
                     const data = grouped[key];
                     const dateObj = new Date(data.date + 'T' + data.time);
                     const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const eventName = data.eventName ? ` - ${data.eventName}` : '';
 
                     return `
                         <div class="border border-gray-200 rounded-lg p-4">
-                            <h3 class="font-bold text-lg mb-3">📅 ${dateStr} - 🕐 ${data.time}</h3>
+                            <h3 class="font-bold text-lg mb-3">📅 ${dateStr}${eventName} - 🕐 ${data.time}</h3>
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                <div class="bg-orange-50 p-3 rounded border-l-4 border-orange-500">
-                                    <h4 class="font-semibold text-orange-700 mb-2">👋 Welcome (${data.welcome.length})</h4>
+                                <div class="bg-blue-50 p-3 rounded border-l-4" style="border-color: #377db8;">
+                                    <h4 class="font-semibold mb-2" style="color: #377db8;">👋 Welcome (${data.welcome.length})</h4>
                                     <div class="text-sm space-y-1">
                                         ${data.welcome.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
                                     </div>
                                 </div>
-                                <div class="bg-purple-50 p-3 rounded border-l-4 border-purple-900">
-                                    <h4 class="font-semibold text-purple-900 mb-2">🎵 Backstage (${data.backstage.length})</h4>
+                                <div class="bg-gray-50 p-3 rounded border-l-4" style="border-color: #0a0e1a;">
+                                    <h4 class="font-semibold mb-2" style="color: #0a0e1a;">🤝 Backstage (${data.backstage.length})</h4>
                                     <div class="text-sm space-y-1">
                                         ${data.backstage.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
                                     </div>
                                 </div>
-                                <div class="bg-orange-50 p-3 rounded border-l-4 border-orange-600">
-                                    <h4 class="font-semibold text-orange-800 mb-2">🚗 Parking (${data.parking.length})</h4>
+                                <div class="bg-blue-50 p-3 rounded border-l-4" style="border-color: #377db8;">
+                                    <h4 class="font-semibold mb-2" style="color: #377db8;">🚗 Parking (${data.parking.length})</h4>
                                     <div class="text-sm space-y-1">
                                         ${data.parking.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
                                     </div>
                                 </div>
-                                <div class="bg-purple-50 p-3 rounded border-l-4 border-purple-800">
-                                    <h4 class="font-semibold text-purple-800 mb-2">👶 Kids (${data.kids.length})</h4>
+                                <div class="bg-gray-50 p-3 rounded border-l-4" style="border-color: #0a0e1a;">
+                                    <h4 class="font-semibold mb-2" style="color: #0a0e1a;">👶 Kids (${data.kids.length})</h4>
                                     <div class="text-sm space-y-1">
                                         ${data.kids.map(v => `<div>• ${v.userName}</div>`).join('') || '<div class="text-gray-400">Ninguém escalado</div>'}
                                     </div>
@@ -505,7 +821,6 @@
 
             // Event Listeners
             elements.googleLoginBtn.addEventListener('click', loginWithGoogle);
-            elements.logoutBtn.addEventListener('click', logout);
             elements.saveEscalaBtn.addEventListener('click', saveEscala);
 
             // Monitorar autenticação
@@ -524,6 +839,38 @@
             });
 
             console.log('✅ App inicializado');
+        }
+        
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (e) => {
+                        console.log('Service Worker instalado');
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', (e) => {
+                        console.log('Service Worker ativado');
+                        return self.clients.claim();
+                    });
+                    
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => {
+                                return new Response('Offline');
+                            })
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(reg => console.log('✅ Service Worker registrado'))
+                    .catch(err => console.error('❌ Erro ao registrar SW:', err));
+            });
         }
         
         // Iniciar quando DOM estiver pronto
