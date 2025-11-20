@@ -805,22 +805,40 @@
 
             // Verificar se usuário é admin
             async function checkAdminStatus(user) {
-                if (!user) return false;
+                if (!user) {
+                    console.log('⚠️ Nenhum usuário para verificar admin');
+                    return false;
+                }
+                
+                console.log('🔍 Verificando status de admin para:', user.email);
+                console.log('🔍 UID do usuário:', user.uid);
                 
                 try {
                     const { doc, getDoc } = window.firestoreMethods;
                     const userDoc = await getDoc(doc(window.firebaseDb, 'users', user.uid));
                     
-                    if (userDoc.exists() && userDoc.data().role === 'admin') {
-                        isAdmin = true;
-                        document.getElementById('admin-panel').style.display = 'block';
-                        console.log('✅ Usuário é administrador');
-                        return true;
+                    console.log('📄 Documento existe?', userDoc.exists());
+                    
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        console.log('📄 Dados do documento:', data);
+                        console.log('📄 Valor do campo role:', data.role);
+                        
+                        if (data.role === 'admin') {
+                            isAdmin = true;
+                            document.getElementById('admin-panel').style.display = 'block';
+                            console.log('✅ Usuário É ADMINISTRADOR');
+                            return true;
+                        } else {
+                            console.log('❌ Usuário NÃO é admin. Role =', data.role);
+                        }
                     } else {
-                        isAdmin = false;
-                        document.getElementById('admin-panel').style.display = 'none';
-                        return false;
+                        console.log('❌ Documento não encontrado em users/' + user.uid);
                     }
+                    
+                    isAdmin = false;
+                    document.getElementById('admin-panel').style.display = 'none';
+                    return false;
                 } catch (error) {
                     console.error('❌ Erro ao verificar admin:', error);
                     isAdmin = false;
@@ -1124,6 +1142,10 @@
             // Atualizar dropdown removendo datas já escaladas
             function updateCultoDropdown(escalas) {
                 const select = elements.cultoSelect;
+                
+                console.log('🔍 updateCultoDropdown chamado');
+                console.log('🔍 Datas disponíveis:', availableDates.length);
+                console.log('🔍 Escalas do usuário:', escalas.length);
 
                 // Criar set com datas já escaladas
                 const escaladasDates = new Set(escalas.map(e => e.date));
@@ -1155,6 +1177,8 @@
                 } else {
                     select.disabled = false;
                 }
+                
+                console.log('✅ Dropdown atualizado. Total de opções:', select.options.length);
             }
 
             // Renderizar escalas do usuário
@@ -1704,11 +1728,11 @@
 
                 if (user) {
                     await checkAdminStatus(user);
+                    await loadAvailableDates(); // Carregar datas ANTES de carregar escalas
                     updateUserUI(user);
-                    await loadAvailableDates();
                     showApp();
-                    loadUserEscalas();
-                    loadAllEscalas();
+                    await loadUserEscalas(); // Agora sim carregar escalas
+                    await loadAllEscalas();
                 } else {
                     showLogin();
                 }
