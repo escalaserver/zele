@@ -158,24 +158,24 @@
             -webkit-animation: blink-border 0.5s ease-in-out 3;
         }
         @keyframes pulse-team {
-            0%, 100% { box-shadow: inset 0 0 0 0px transparent; }
-            50% { box-shadow: inset 0 0 0 3px #cdc8c0; }
+            0%, 100% { border: 1px solid #e5e5e5; }
+            50% { border: 5px solid #cdc8c0; }
         }
         @-webkit-keyframes pulse-team {
-            0%, 100% { box-shadow: inset 0 0 0 0px transparent; }
-            50% { box-shadow: inset 0 0 0 3px #cdc8c0; }
+            0%, 100% { border: 1px solid #e5e5e5; }
+            50% { border: 5px solid #cdc8c0; }
         }
         .pulse-team {
             animation: pulse-team 0.5s ease-in-out 2;
             -webkit-animation: pulse-team 0.5s ease-in-out 2;
         }
         @keyframes pulse-save {
-            0%, 100% { box-shadow: inset 0 0 0 0px transparent; }
-            50% { box-shadow: inset 0 0 0 3px #cdc8c0; }
+            0%, 100% { border: 2px solid transparent; }
+            50% { border: 5px solid #cdc8c0; }
         }
         @-webkit-keyframes pulse-save {
-            0%, 100% { box-shadow: inset 0 0 0 0px transparent; }
-            50% { box-shadow: inset 0 0 0 3px #cdc8c0; }
+            0%, 100% { border: 2px solid transparent; }
+            50% { border: 5px solid #cdc8c0; }
         }
         .pulse-save {
             animation: pulse-save 0.5s ease-in-out 2;
@@ -267,7 +267,27 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-left text-sm font-semibold mb-2" style="color: #151b29;">Senha</label>
-                    <input type="password" id="register-password" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2" style="--tw-ring-color: #151b29;" placeholder="Mínimo 6 caracteres">
+                    <div class="relative">
+                        <input type="password" id="register-password" class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2" style="--tw-ring-color: #151b29;" placeholder="Mínimo 6 caracteres">
+                        <button type="button" id="toggle-register-password" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg id="eye-icon-register" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-left text-sm font-semibold mb-2" style="color: #151b29;">Confirmar Senha</label>
+                    <div class="relative">
+                        <input type="password" id="register-password-confirm" class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2" style="--tw-ring-color: #151b29;" placeholder="Digite a senha novamente">
+                        <button type="button" id="toggle-register-password-confirm" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg id="eye-icon-register-confirm" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <button id="email-register-btn" class="w-full zele-btn text-white font-bold py-3 px-6 rounded-lg mb-3">
                     Cadastrar
@@ -676,12 +696,14 @@
             let allEscalasGrouped = {};
 
             // Modal functions
-            function showModal(message, showYesNo = false, onYes = null, isWarning = false, onClose = null) {
+            function showModal(message, showYesNo = false, onYes = null, isWarning = false, onClose = null, customEmoji = null) {
                 elements.modalMessage.textContent = message;
                 
                 // Mudar emoji baseado no tipo de modal
                 const emojiDiv = elements.successModal.querySelector('.mb-4');
-                if (isWarning) {
+                if (customEmoji) {
+                    emojiDiv.textContent = customEmoji;
+                } else if (isWarning) {
                     emojiDiv.textContent = '⚠️';
                 } else {
                     emojiDiv.textContent = '✅';
@@ -1096,6 +1118,33 @@
                 elements.appContainer.classList.add('hidden');
             }
 
+            // Verificar limite de voluntários no time (máximo 4 por time por evento)
+            async function checkTeamLimit(date, time, team) {
+                try {
+                    const { collection, query, where, getDocs } = window.firestoreMethods;
+                    const q = query(
+                        collection(window.firebaseDb, 'escalas'),
+                        where('date', '==', date),
+                        where('time', '==', time),
+                        where('team', '==', team)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    const count = querySnapshot.size;
+                    
+                    console.log(`📊 Time ${team} no evento ${date} ${time}: ${count}/4 voluntários`);
+                    
+                    return {
+                        count: count,
+                        isFull: count >= 4,
+                        remaining: Math.max(0, 4 - count)
+                    };
+                } catch (error) {
+                    console.error('❌ Erro ao verificar limite do time:', error);
+                    return { count: 0, isFull: false, remaining: 4 };
+                }
+            }
+
             // Salvar escala
             async function saveEscala() {
                 if (!currentUser) {
@@ -1122,13 +1171,33 @@
                 };
 
                 try {
-                    // Verificar se já existe escala deste usuário para esta data
-                    const escalaId = `${currentUser.uid}_${date}`;
+                    // Verificar limite de voluntários no time para esta data/hora
+                    const teamLimit = await checkTeamLimit(date, time, team);
+                    
+                    // Verificar se já existe escala deste usuário para esta data e horário
+                    const escalaId = `${currentUser.uid}_${date}_${time}`;
                     const { doc, getDoc, setDoc } = window.firestoreMethods;
                     
                     // Buscar escala existente
                     const docRef = doc(window.firebaseDb, 'escalas', escalaId);
                     const docSnap = await getDoc(docRef);
+                    
+                    // Se usuário já está escalado neste evento
+                    const userAlreadyInEvent = docSnap.exists();
+                    const isChangingTeam = userAlreadyInEvent && docSnap.data().team !== team;
+                    
+                    // Se time está cheio E usuário não está mudando de time (nova entrada)
+                    if (teamLimit.isFull && !isChangingTeam) {
+                        showModal(
+                            `Obrigado pela sua disponibilidade! 😊 O time ${teamNames[team]} já está com a escala completa para este evento. Por favor, escolha outro time para servir.`,
+                            false,
+                            null,
+                            false,
+                            null,
+                            '🙏'
+                        );
+                        return;
+                    }
                     
                     if (docSnap.exists()) {
                         const existingTeam = docSnap.data().team;
@@ -1267,8 +1336,12 @@
                         escalas.push({ id: doc.id, ...doc.data() });
                     });
 
-                    // Ordenar por data
-                    escalas.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    // Ordenar por data e horário (ordem crescente)
+                    escalas.sort((a, b) => {
+                        const dateTimeA = new Date(a.date + 'T' + a.time);
+                        const dateTimeB = new Date(b.date + 'T' + b.time);
+                        return dateTimeA - dateTimeB;
+                    });
 
                     // Armazenar todas as escalas
                     allUserEscalas = escalas;
@@ -1470,7 +1543,12 @@
                             }
                             
                             showModal(
-                                '⛔ Não é possível deletar escala na véspera ou no dia do evento. Entre em contato com o líder dos Voluntários para solicitar a exclusão.'
+                                'Por aqui, não é possível deletar escala na véspera ou no dia do evento. Entre em contato com o líder para solicitar a exclusão.',
+                                false,
+                                null,
+                                false,
+                                null,
+                                '⛔'
                             );
                             return;
                         }
@@ -1529,7 +1607,14 @@
             // Atualizar filtro de Visão Geral
             function updateVisaoGeralFilter(grouped) {
                 const filter = elements.filterVisaoGeral;
-                const dates = Object.keys(grouped).sort();
+                // Ordenar chaves por data e hora
+                const dates = Object.keys(grouped).sort((a, b) => {
+                    const [dateA, timeA] = a.split('_');
+                    const [dateB, timeB] = b.split('_');
+                    const dateTimeA = new Date(dateA + 'T' + timeA);
+                    const dateTimeB = new Date(dateB + 'T' + timeB);
+                    return dateTimeA - dateTimeB;
+                });
                 
                 filter.innerHTML = '<option value="">Todas as datas</option>';
                 
@@ -1840,7 +1925,14 @@
 
             // Renderizar visão admin
             function renderAdminView(grouped) {
-                const dates = Object.keys(grouped).sort();
+                // Ordenar chaves por data e hora (ordem crescente)
+                const dates = Object.keys(grouped).sort((a, b) => {
+                    const [dateA, timeA] = a.split('_');
+                    const [dateB, timeB] = b.split('_');
+                    const dateTimeA = new Date(dateA + 'T' + timeA);
+                    const dateTimeB = new Date(dateB + 'T' + timeB);
+                    return dateTimeA - dateTimeB;
+                });
 
                 if (dates.length === 0) {
                     elements.adminView.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma escala cadastrada ainda.</p>';
@@ -2018,20 +2110,45 @@
                 }
             });
             
+            // Alternar visibilidade da senha no cadastro
+            document.getElementById('toggle-register-password').addEventListener('click', () => {
+                const input = document.getElementById('register-password');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                } else {
+                    input.type = 'password';
+                }
+            });
+            
+            document.getElementById('toggle-register-password-confirm').addEventListener('click', () => {
+                const input = document.getElementById('register-password-confirm');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                } else {
+                    input.type = 'password';
+                }
+            });
+            
             // Cadastro com email
             document.getElementById('email-register-btn').addEventListener('click', async () => {
                 const name = document.getElementById('register-name').value.trim();
                 const lastname = document.getElementById('register-lastname').value.trim();
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
+                const passwordConfirm = document.getElementById('register-password-confirm').value;
                 
-                if (!name || !lastname || !email || !password) {
+                if (!name || !lastname || !email || !password || !passwordConfirm) {
                     showModal('Por favor, preencha todos os campos!');
                     return;
                 }
                 
                 if (password.length < 6) {
                     showModal('A senha deve ter no mínimo 6 caracteres!');
+                    return;
+                }
+                
+                if (password !== passwordConfirm) {
+                    showModal('As senhas não coincidem! Por favor, verifique.', false, null, false, null, '⚠️');
                     return;
                 }
                 
