@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zele Server</title>
-    <meta name="application-name" content="Zele Server">
-    <meta name="apple-mobile-web-app-title" content="Zele Server">
+    <meta name="application-name" content="Volunteer">
+    <meta name="apple-mobile-web-app-title" content="Volunteer">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#151b29">
@@ -1901,6 +1901,15 @@
             async function loadBlockedAttempts() {
                 if (!isAdmin) return;
                 
+                const listEl = document.getElementById('blocked-attempts-list');
+                if (!listEl) {
+                    console.error('❌ Elemento blocked-attempts-list não encontrado');
+                    return;
+                }
+                
+                // Mostrar loading
+                listEl.innerHTML = '<p class="text-gray-500 text-center py-8">Carregando...</p>';
+                
                 try {
                     const { collection, getDocs, query, orderBy } = window.firestoreMethods;
                     const q = query(
@@ -1914,11 +1923,11 @@
                         attempts.push({ id: doc.id, ...doc.data() });
                     });
                     
+                    console.log('📋 Tentativas bloqueadas carregadas:', attempts.length);
                     renderBlockedAttempts(attempts);
                 } catch (error) {
                     console.error('❌ Erro ao carregar tentativas bloqueadas:', error);
-                    document.getElementById('blocked-attempts-list').innerHTML = 
-                        '<p class="text-gray-500 text-center py-8">Erro ao carregar dados.</p>';
+                    listEl.innerHTML = '<p class="text-red-500 text-center py-8">❌ Erro ao carregar dados. Verifique o console.</p>';
                 }
             }
 
@@ -1926,8 +1935,13 @@
             function renderBlockedAttempts(attempts) {
                 const listEl = document.getElementById('blocked-attempts-list');
                 
+                if (!listEl) {
+                    console.error('❌ Elemento blocked-attempts-list não encontrado no render');
+                    return;
+                }
+                
                 if (attempts.length === 0) {
-                    listEl.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma tentativa bloqueada registrada.</p>';
+                    listEl.innerHTML = '<p class="text-gray-500 text-center py-8">✅ Nenhuma tentativa bloqueada registrada.</p>';
                     return;
                 }
                 
