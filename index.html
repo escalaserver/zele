@@ -799,7 +799,8 @@
 
             // Modal functions
             function showModal(message, showYesNo = false, onYes = null, isWarning = false, onClose = null, customEmoji = null) {
-                elements.modalMessage.textContent = message;
+                // Usar innerHTML para suportar formatação HTML
+                elements.modalMessage.innerHTML = message;
                 
                 // Mudar emoji baseado no tipo de modal
                 const emojiDiv = elements.successModal.querySelector('.mb-4');
