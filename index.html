@@ -11,9 +11,9 @@
     <meta name="theme-color" content="#151b29">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvbHVudGVlcnMgWmVsZSIsCiAgInNob3J0X25hbWUiOiAiVm9sdW50ZWVycyBaZWxlIiwKICAiZGVzY3JpcHRpb24iOiAiU2VydmlyIMOpIGEgbGluZ3VhZ2VtIGRvIGPDqXUiLAogICJzdGFydF91cmwiOiAiLi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNjZGM4YzAiLAogICJ0aGVtZV9jb2xvciI6ICIjMTUxYjI5IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL1ZvbHVudGVlcnNaZWxlL2VzY2FsYS9tYWluL1pvbHVudGVlcnMlMjBsb2dvLnBuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vVm9sdW50ZWVyc1plbGUvZXNjYWxhL21haW4vWm9sdW50ZWVycyUyMGxvZ28ucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png">
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvbHVudGVlcnMgWmVsZSIsCiAgInNob3J0X25hbWUiOiAiVm9sdW50ZWVycyBaZWxlIiwKICAiZGVzY3JpcHRpb24iOiAiU2VydmlyIMOpIGEgbGluZ3VhZ2VtIGRvIGPDqXUiLAogICJzdGFydF91cmwiOiAiL2VzY2FsYS8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNjZGM4YzAiLAogICJ0aGVtZV9jb2xvciI6ICIjMTUxYjI5IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiWmVsZSUyMGxvZ28ucG5nIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIlplbGUlMjBsb2dvLnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfQogIF0KfQ==">
+    <link rel="apple-touch-icon" href="Zele logo.png">
+    <link rel="icon" type="image/png" href="Zele logo.png">
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -57,6 +57,8 @@
         window.firebaseReady = true;
     </script>
     
+    <!-- Tailwind CDN: Para produção, considere instalar via npm e usar build process -->
+    <!-- Veja: https://tailwindcss.com/docs/installation -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -205,7 +207,7 @@
     <!-- Tela de Loading -->
     <div id="loading-screen" class="fixed inset-0 zele-primary flex items-center justify-center z-50">
         <div class="text-center text-white">
-            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Zele Server" class="w-32 h-32 mx-auto mb-4 object-contain">
+            <img src="Volunteers logo.png" alt="Zele Server" class="w-32 h-32 mx-auto mb-4 object-contain">
             <h1 class="text-5xl font-bold mb-4">Zele Server</h1>
             <p class="text-xl mb-8">Sistema de Escalas</p>
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white mx-auto"></div>
@@ -215,7 +217,7 @@
     <!-- Tela de Login -->
     <div id="auth-screen" class="fixed inset-0 zele-primary flex items-center justify-center p-4 hidden">
         <div class="card-float rounded-2xl p-8 max-w-md w-full text-center">
-            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Zele Server" class="w-24 h-24 mx-auto mb-4 object-contain">
+            <img src="Volunteers logo.png" alt="Zele Server" class="w-24 h-24 mx-auto mb-4 object-contain">
             <h1 class="text-4xl font-bold mb-2" style="color: #151b29;">Zele Server</h1>
             <p class="text-gray-600 mb-8">Sistema de Escalas</p>
             
@@ -342,7 +344,7 @@
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
                         <h1 class="text-2xl font-bold">Zele Server</h1>
                     </div>
                     <div class="flex items-center gap-4">
@@ -382,27 +384,27 @@
                     <label class="block text-sm font-semibold mb-2" style="color: #151b29;">2º - Em qual equipe você vai servir nesta data?</label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <button class="team-btn rounded-lg" data-team="welcome" 
-                                data-img-normal="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Welcome%20horizontal.png"
-                                data-img-selected="https://raw.githubusercontent.com/VolunteersZele/escala/main/Welcome%20azul%20claro.png">
-                            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Welcome%20horizontal.png" alt="Welcome" onerror="this.classList.add('error');this.style.display='none';">
+                                data-img-normal="Logo Welcome horizontal.png"
+                                data-img-selected="Welcome azul claro.png">
+                            <img src="Logo Welcome horizontal.png" alt="Welcome" onerror="this.classList.add('error');this.style.display='none';">
                             <div class="team-name-fallback">WELCOME</div>
                         </button>
                         <button class="team-btn rounded-lg" data-team="backstage"
-                                data-img-normal="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Backstage%20horizontal.png"
-                                data-img-selected="https://raw.githubusercontent.com/VolunteersZele/escala/main/Backstage%20azul%20claro.png">
-                            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Backstage%20horizontal.png" alt="Backstage" onerror="this.classList.add('error');this.style.display='none';">
+                                data-img-normal="Logo Backstage horizontal.png"
+                                data-img-selected="Backstage azul claro.png">
+                            <img src="Logo Backstage horizontal.png" alt="Backstage" onerror="this.classList.add('error');this.style.display='none';">
                             <div class="team-name-fallback">BACKSTAGE</div>
                         </button>
                         <button class="team-btn rounded-lg" data-team="parking"
-                                data-img-normal="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Parking%20horizontal.png"
-                                data-img-selected="https://raw.githubusercontent.com/VolunteersZele/escala/main/Parking%20azul%20claro.png">
-                            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Parking%20horizontal.png" alt="Parking" onerror="this.classList.add('error');this.style.display='none';">
+                                data-img-normal="Logo Parking horizontal.png"
+                                data-img-selected="Parking azul claro.png">
+                            <img src="Logo Parking horizontal.png" alt="Parking" onerror="this.classList.add('error');this.style.display='none';">
                             <div class="team-name-fallback">PARKING</div>
                         </button>
                         <button class="team-btn rounded-lg" data-team="kids"
-                                data-img-normal="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Kids%20horizontal.png"
-                                data-img-selected="https://raw.githubusercontent.com/VolunteersZele/escala/main/Kids%20azul%20claro.png">
-                            <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Logo%20Kids%20horizontal.png" alt="Kids" onerror="this.classList.add('error');this.style.display='none';">
+                                data-img-normal="Logo Kids horizontal.png"
+                                data-img-selected="Kids azul claro.png">
+                            <img src="Logo Kids horizontal.png" alt="Kids" onerror="this.classList.add('error');this.style.display='none';">
                             <div class="team-name-fallback">KIDS</div>
                         </button>
                     </div>
@@ -457,7 +459,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
                         <h1 class="text-2xl font-bold">Painel de Administração</h1>
                     </div>
                 </div>
@@ -538,7 +540,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
                         <h1 class="text-2xl font-bold">Gerenciar Administradores</h1>
                     </div>
                 </div>
@@ -569,7 +571,7 @@
             <!-- Header do Menu -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
-                    <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Logo" class="w-12 h-12 object-contain">
+                    <img src="Volunteers logo.png" alt="Logo" class="w-12 h-12 object-contain">
                     <h2 class="text-xl font-bold" style="color: #151b29;">Menu</h2>
                 </div>
                 <button id="menu-close-btn" class="text-gray-600 hover:text-gray-800">
@@ -723,7 +725,7 @@
     <script>
         // 🔧 CONFIGURAÇÕES DO SISTEMA
         const CONFIG = {
-            DEBUG_MODE: true, // ⚠️ ATIVADO PARA TESTES - Alterar para false em produção
+            DEBUG_MODE: false, // Desativado para produção
             SCHEMA_VERSION: '2.3.0',
             MAX_RETRIES: 3,
             RETRY_DELAY: 1000, // ms
@@ -2795,7 +2797,7 @@
                         const isCurrentUser = user.id === currentUser.uid;
                         const displayName = user.displayName || 'Sem nome';
                         const email = user.email || 'Sem email';
-                        const photoURL = user.photoURL || 'https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png';
+                        const photoURL = user.photoURL || 'Zele logo.png';
                         
                         html += `
                             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
