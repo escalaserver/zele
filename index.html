@@ -15,6 +15,9 @@
     <link rel="apple-touch-icon" href="https://github.com/VolunteersZele/escala/blob/main/Volunteers%20logo.png?raw=true">
     <link rel="icon" type="image/png" href="https://github.com/VolunteersZele/escala/blob/main/Volunteers%20logo.png?raw=true">
     
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -484,19 +487,19 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-gray-600 mb-1">👋 Welcome</label>
-                                <input type="number" id="admin-limit-welcome" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="5">
+                                <input type="number" id="admin-limit-welcome" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="4">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 mb-1">🤝 Backstage</label>
-                                <input type="number" id="admin-limit-backstage" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="5">
+                                <input type="number" id="admin-limit-backstage" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="4">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 mb-1">🚗 Parking</label>
-                                <input type="number" id="admin-limit-parking" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="5">
+                                <input type="number" id="admin-limit-parking" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="4">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 mb-1">👶 Kids</label>
-                                <input type="number" id="admin-limit-kids" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="5">
+                                <input type="number" id="admin-limit-kids" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="4" min="1" max="20" value="4">
                             </div>
                         </div>
                         <span id="limit-error" class="text-xs text-red-600 hidden mt-1"></span>
@@ -549,6 +552,17 @@
 
             <!-- Menu Items -->
             <div class="space-y-2">
+                <button id="menu-upcoming-events-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left relative">
+                    <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800">Próximos Eventos</p>
+                        <p class="text-xs text-gray-600">Suas escalas próximas</p>
+                    </div>
+                    <span id="upcoming-badge" class="hidden absolute top-3 right-3 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+                </button>
+
                 <button id="menu-admin-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left" style="display: none;">
                     <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -660,22 +674,30 @@
         // 🔧 CONFIGURAÇÕES DO SISTEMA
         const CONFIG = {
             DEBUG_MODE: false, // Alterar para false em produção
-            SCHEMA_VERSION: '2.1.0',
+            SCHEMA_VERSION: '2.2.0',
             MAX_RETRIES: 3,
             RETRY_DELAY: 1000, // ms
-            BACKUP_ENABLED: true
+            BACKUP_ENABLED: true,
+            // EmailJS - Configure em https://www.emailjs.com/
+            EMAILJS_PUBLIC_KEY: 'wtigfazeluf0vyzGp', // Trocar pela sua chave
+            EMAILJS_SERVICE_ID: 'service_a6x08k6', // Trocar pelo seu service
+            EMAILJS_TEMPLATE_ID: 'template_jvfnmsp' // Trocar pelo seu template
         };
         
-        // Sistema de logging condicional
-        const logger = {
-            log: (...args) => CONFIG.DEBUG_MODE && console.log(...args),
-            info: (...args) => CONFIG.DEBUG_MODE && console.info(...args),
-            warn: (...args) => console.warn(...args), // Sempre mostrar warnings
-            error: (...args) => console.error(...args), // Sempre mostrar erros
-            success: (...args) => CONFIG.DEBUG_MODE && console.log('✅', ...args)
-        };
-        
-        // Aguardar Firebase estar pronto
+            // Sistema de logging condicional
+            const logger = {
+                log: (...args) => CONFIG.DEBUG_MODE && console.log(...args),
+                info: (...args) => CONFIG.DEBUG_MODE && console.info(...args),
+                warn: (...args) => console.warn(...args), // Sempre mostrar warnings
+                error: (...args) => console.error(...args), // Sempre mostrar erros
+                success: (...args) => CONFIG.DEBUG_MODE && console.log('✅', ...args)
+            };
+            
+            // Inicializar EmailJS
+            if (typeof emailjs !== 'undefined' && CONFIG.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+                emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
+                console.log('📧 EmailJS inicializado');
+            }        // Aguardar Firebase estar pronto
         function initApp() {
             logger.log('🚀 App iniciando... v' + CONFIG.SCHEMA_VERSION);
             
@@ -737,6 +759,96 @@
             let availableDates = [];
             let deferredPrompt = null;
             let isIOS = false;
+            
+            // Verificar e atualizar badge de próximos eventos
+            function updateUpcomingEventsBadge(escalas) {
+                const now = new Date();
+                const next48h = new Date(now.getTime() + (48 * 60 * 60 * 1000)); // 48 horas
+                
+                const upcomingEvents = escalas.filter(escala => {
+                    const eventDateTime = new Date(escala.date + 'T' + escala.time);
+                    return eventDateTime > now && eventDateTime <= next48h;
+                });
+                
+                const badge = document.getElementById('upcoming-badge');
+                if (upcomingEvents.length > 0) {
+                    badge.textContent = upcomingEvents.length;
+                    badge.classList.remove('hidden');
+                    console.log(`🔔 ${upcomingEvents.length} evento(s) nas próximas 48h`);
+                } else {
+                    badge.classList.add('hidden');
+                }
+                
+                return upcomingEvents;
+            }
+            
+            // Enviar email de lembrete 24h antes do evento
+            async function sendReminderEmail(escalaData) {
+                // Verificar se EmailJS está configurado
+                if (CONFIG.EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+                    console.log('⚠️ EmailJS não configurado. Pule o envio de email.');
+                    return;
+                }
+                
+                const teamNames = {
+                    welcome: 'Welcome',
+                    backstage: 'Backstage',
+                    parking: 'Parking',
+                    kids: 'Kids'
+                };
+                
+                const eventDate = new Date(escalaData.date + 'T' + escalaData.time);
+                const formattedDate = eventDate.toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                const formattedTime = escalaData.time === '00:00' ? 'Horário a definir' : escalaData.time;
+                
+                const templateParams = {
+                    to_email: currentUser.email,
+                    to_name: currentUser.displayName || currentUser.email,
+                    event_date: formattedDate,
+                    event_time: formattedTime,
+                    event_name: escalaData.eventName || '',
+                    team_name: teamNames[escalaData.team] || escalaData.team
+                };
+                
+                try {
+                    await emailjs.send(
+                        CONFIG.EMAILJS_SERVICE_ID,
+                        CONFIG.EMAILJS_TEMPLATE_ID,
+                        templateParams
+                    );
+                    console.log('📧 Email de lembrete enviado para:', currentUser.email);
+                } catch (error) {
+                    console.error('❌ Erro ao enviar email:', error);
+                }
+            }
+            
+            // Verificar eventos que precisam de lembrete (24h antes)
+            async function checkAndSendReminders(escalas) {
+                const now = new Date();
+                const in24h = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+                const in25h = new Date(now.getTime() + (25 * 60 * 60 * 1000));
+                
+                for (const escala of escalas) {
+                    const eventDateTime = new Date(escala.date + 'T' + escala.time);
+                    
+                    // Se o evento está entre 24h e 25h no futuro
+                    if (eventDateTime > in24h && eventDateTime <= in25h) {
+                        // Verificar se já enviou lembrete (evitar duplicatas)
+                        const reminderSentKey = `reminder_sent_${escala.id}`;
+                        const alreadySent = localStorage.getItem(reminderSentKey);
+                        
+                        if (!alreadySent) {
+                            await sendReminderEmail(escala);
+                            localStorage.setItem(reminderSentKey, 'true');
+                        }
+                    }
+                }
+            }
             
             // Pré-carregar todas as imagens dos times
             const preloadedImages = {};
@@ -990,6 +1102,12 @@
                 }
             });
 
+            // Botão de próximos eventos
+            document.getElementById('menu-upcoming-events-btn')?.addEventListener('click', () => {
+                closeMenu();
+                showUpcomingEventsModal();
+            });
+            
             // Botão de tentativas bloqueadas
             document.getElementById('menu-blocked-attempts-btn')?.addEventListener('click', () => {
                 closeMenu();
@@ -1497,6 +1615,8 @@
                     
                     renderUserEscalas(escalas);
                     updateCultoDropdown(escalas);
+                    updateUpcomingEventsBadge(escalas);
+                    checkAndSendReminders(escalas);
                 } catch (error) {
                     console.error('❌ Erro ao carregar escalas:', error);
                 }
@@ -1529,6 +1649,56 @@
                     renderUserEscalas(allUserEscalas);
                 }
             });
+            
+            // Mostrar modal de próximos eventos
+            function showUpcomingEventsModal() {
+                const upcomingEvents = updateUpcomingEventsBadge(allUserEscalas);
+                
+                const teamNames = {
+                    welcome: 'Welcome',
+                    backstage: 'Backstage',
+                    parking: 'Parking',
+                    kids: 'Kids'
+                };
+                
+                if (upcomingEvents.length === 0) {
+                    showModal('✅ Você não tem eventos nas próximas 48 horas!', false, null, false, null, '📅');
+                    return;
+                }
+                
+                const eventsList = upcomingEvents.map(event => {
+                    const eventDate = new Date(event.date + 'T' + event.time);
+                    const formattedDate = eventDate.toLocaleDateString('pt-BR', { 
+                        weekday: 'short', 
+                        day: 'numeric', 
+                        month: 'short' 
+                    });
+                    const formattedTime = event.time === '00:00' ? '(horário a definir)' : event.time;
+                    const hoursUntil = Math.round((eventDate - new Date()) / (1000 * 60 * 60));
+                    
+                    return `<div class="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-2 rounded">
+                        <div class="font-bold text-gray-800">${teamNames[event.team]}</div>
+                        <div class="text-sm text-gray-700">📅 ${formattedDate} ${event.eventName ? '- ' + event.eventName : ''}</div>
+                        <div class="text-sm text-gray-700">🕐 ${formattedTime}</div>
+                        <div class="text-xs text-yellow-700 font-semibold mt-1">⏰ Faltam ${hoursUntil}h</div>
+                    </div>`;
+                }).join('');
+                
+                showModal(
+                    `<div class="text-left">
+                        <div class="mb-4 text-center">
+                            <h3 class="text-lg font-bold text-gray-800">🔔 Seus Próximos Eventos</h3>
+                            <p class="text-sm text-gray-600">Você tem ${upcomingEvents.length} evento(s) nas próximas 48h</p>
+                        </div>
+                        ${eventsList}
+                    </div>`,
+                    false,
+                    null,
+                    false,
+                    null,
+                    null
+                );
+            }
 
             // Limpar escalas de eventos passados
             async function cleanPastEscalas() {
@@ -1899,6 +2069,56 @@
                 }
             }
 
+            // Mostrar modal de próximos eventos
+            function showUpcomingEventsModal() {
+                const upcomingEvents = updateUpcomingEventsBadge(allUserEscalas);
+                
+                const teamNames = {
+                    welcome: 'Welcome',
+                    backstage: 'Backstage',
+                    parking: 'Parking',
+                    kids: 'Kids'
+                };
+                
+                if (upcomingEvents.length === 0) {
+                    showModal('✅ Você não tem eventos nas próximas 48 horas!', false, null, false, null, '📅');
+                    return;
+                }
+                
+                const eventsList = upcomingEvents.map(event => {
+                    const eventDate = new Date(event.date + 'T' + event.time);
+                    const formattedDate = eventDate.toLocaleDateString('pt-BR', { 
+                        weekday: 'short', 
+                        day: 'numeric', 
+                        month: 'short' 
+                    });
+                    const formattedTime = event.time === '00:00' ? '(horário a definir)' : event.time;
+                    const hoursUntil = Math.round((eventDate - new Date()) / (1000 * 60 * 60));
+                    
+                    return `<div class="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-2 rounded">
+                        <div class="font-bold text-gray-800">${teamNames[event.team]}</div>
+                        <div class="text-sm text-gray-700">📅 ${formattedDate} ${event.eventName ? '- ' + event.eventName : ''}</div>
+                        <div class="text-sm text-gray-700">🕐 ${formattedTime}</div>
+                        <div class="text-xs text-yellow-700 font-semibold mt-1">⏰ Faltam ${hoursUntil}h</div>
+                    </div>`;
+                }).join('');
+                
+                showModal(
+                    `<div class="text-left">
+                        <div class="mb-4 text-center">
+                            <h3 class="text-lg font-bold text-gray-800">🔔 Seus Próximos Eventos</h3>
+                            <p class="text-sm text-gray-600">Você tem ${upcomingEvents.length} evento(s) nas próximas 48h</p>
+                        </div>
+                        ${eventsList}
+                    </div>`,
+                    false,
+                    null,
+                    false,
+                    null,
+                    null
+                );
+            }
+            
             // Carregar tentativas bloqueadas (apenas admin)
             async function loadBlockedAttempts() {
                 if (!isAdmin) return;
@@ -1913,7 +2133,30 @@
                 listEl.innerHTML = '<p class="text-gray-500 text-center py-8">Carregando...</p>';
                 
                 try {
-                    const { collection, getDocs, query, orderBy } = window.firestoreMethods;
+                    console.log('🔍 Verificando métodos disponíveis:', Object.keys(window.firestoreMethods || {}));
+                    
+                    const { collection, getDocs, query, orderBy } = window.firestoreMethods || {};
+                    
+                    if (!collection || !getDocs) {
+                        throw new Error('Métodos do Firestore não disponíveis. Recarregue a página.');
+                    }
+                    
+                    if (!query || !orderBy) {
+                        console.warn('⚠️ orderBy não disponível, carregando sem ordenação');
+                        // Fallback: carregar sem ordenação
+                        const querySnapshot = await getDocs(collection(window.firebaseDb, 'blockedAttempts'));
+                        const attempts = [];
+                        querySnapshot.forEach((doc) => {
+                            attempts.push({ id: doc.id, ...doc.data() });
+                        });
+                        // Ordenar manualmente
+                        attempts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        console.log('📋 Tentativas bloqueadas carregadas (sem orderBy):', attempts.length);
+                        renderBlockedAttempts(attempts);
+                        return;
+                    }
+                    
+                    // Carregar com ordenação
                     const q = query(
                         collection(window.firebaseDb, 'blockedAttempts'),
                         orderBy('timestamp', 'desc')
@@ -1929,7 +2172,8 @@
                     renderBlockedAttempts(attempts);
                 } catch (error) {
                     console.error('❌ Erro ao carregar tentativas bloqueadas:', error);
-                    listEl.innerHTML = '<p class="text-red-500 text-center py-8">❌ Erro ao carregar dados. Verifique o console.</p>';
+                    console.error('❌ Detalhes do erro:', error.message);
+                    listEl.innerHTML = `<p class="text-red-500 text-center py-8">❌ ${error.message || 'Erro ao carregar dados.'}<br><small class="text-xs">Tente recarregar a página (Ctrl+Shift+R)</small></p>`;
                 }
             }
 
