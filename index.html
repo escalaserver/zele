@@ -3115,11 +3115,8 @@
         }
         
         // ========================================
-        // SERVICE WORKER (PWA) - DESABILITADO
+        // SERVICE WORKER (PWA) - HABILITADO
         // ========================================
-        // O Service Worker via blob URL não funciona no GitHub Pages
-        // Para habilitar PWA completo, crie um arquivo service-worker.js separado
-        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -3127,8 +3124,6 @@
                     .catch(err => console.log('⚠️ Service Worker não disponível:', err.message));
             });
         }
-        */
-        console.log('ℹ️ Service Worker desabilitado (use arquivo separado para PWA completo)');
         
         // Iniciar quando DOM estiver pronto
         if (document.readyState === 'loading') {
