@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#151b29">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvbHVudGVlcnMgWmVsZSIsCiAgInNob3J0X25hbWUiOiAiVm9sdW50ZWVycyBaZWxlIiwKICAiZGVzY3JpcHRpb24iOiAiU2VydmlyIMOpIGEgbGluZ3VhZ2VtIGRvIGPDqXUiLAogICJzdGFydF91cmwiOiAiLi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNjZGM4YzAiLAogICJ0aGVtZV9jb2xvciI6ICIjMTUxYjI5IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9naXRodWIuY29tL1ZvbHVudGVlcnNaZWxlL2VzY2FsYS9ibG9iL21haW4vVm9sdW50ZWVycyUyMGxvZ28ucG5nP3Jhdz10cnVlIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS9Wb2x1bnRlZXJzWmVsZS9lc2NhbGEvYmxvYi9tYWluL1ZvbHVudGVlcnMlMjBsb2dvLnBuZz9yYXc9dHJ1ZSIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfQogIF0KfQ==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvbHVudGVlcnMgWmVsZSIsCiAgInNob3J0X25hbWUiOiAiVm9sdW50ZWVycyBaZWxlIiwKICAiZGVzY3JpcHRpb24iOiAiU2VydmlyIMOpIGEgbGluZ3VhZ2VtIGRvIGPDqXUiLAogICJzdGFydF91cmwiOiAiLi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNjZGM4YzAiLAogICJ0aGVtZV9jb2xvciI6ICIjMTUxYjI5IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL1ZvbHVudGVlcnNaZWxlL2VzY2FsYS9tYWluL1pvbHVudGVlcnMlMjBsb2dvLnBuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vVm9sdW50ZWVyc1plbGUvZXNjYWxhL21haW4vWm9sdW50ZWVycyUyMGxvZ28ucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png">
     
@@ -3119,8 +3119,13 @@
         // ========================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('✅ Service Worker registrado'))
+                // GitHub Pages usa subpasta /escala/
+                const swPath = window.location.pathname.includes('/escala/') 
+                    ? '/escala/service-worker.js'  // GitHub Pages
+                    : './service-worker.js';        // Local ou raiz
+                
+                navigator.serviceWorker.register(swPath)
+                    .then(reg => console.log('✅ Service Worker registrado:', swPath))
                     .catch(err => console.log('⚠️ Service Worker não disponível:', err.message));
             });
         }
