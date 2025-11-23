@@ -338,7 +338,10 @@
                             <p class="text-sm font-semibold" id="user-name">Usuário</p>
                             <p class="text-xs opacity-90" id="user-email">email@example.com</p>
                         </div>
-                        <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-white">
+                        <button id="user-photo-btn" class="relative cursor-pointer" style="background: none; border: none; padding: 0;">
+                            <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-white">
+                            <span id="header-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="box-shadow: 0 2px 4px rgba(0,0,0,0.3);">0</span>
+                        </button>
                         <button id="menu-btn" class="zele-btn p-2 rounded-lg">
                             <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -770,13 +773,27 @@
                     return eventDateTime > now && eventDateTime <= next48h;
                 });
                 
+                // Atualizar badge do menu
                 const badge = document.getElementById('upcoming-badge');
-                if (upcomingEvents.length > 0) {
-                    badge.textContent = upcomingEvents.length;
-                    badge.classList.remove('hidden');
-                    console.log(`🔔 ${upcomingEvents.length} evento(s) nas próximas 48h`);
-                } else {
-                    badge.classList.add('hidden');
+                if (badge) {
+                    if (upcomingEvents.length > 0) {
+                        badge.textContent = upcomingEvents.length;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+                
+                // Atualizar badge do header (foto do usuário)
+                const headerBadge = document.getElementById('header-badge');
+                if (headerBadge) {
+                    if (upcomingEvents.length > 0) {
+                        headerBadge.textContent = upcomingEvents.length;
+                        headerBadge.classList.remove('hidden');
+                        console.log(`🔔 ${upcomingEvents.length} evento(s) nas próximas 48h`);
+                    } else {
+                        headerBadge.classList.add('hidden');
+                    }
                 }
                 
                 return upcomingEvents;
@@ -1102,9 +1119,14 @@
                 }
             });
 
-            // Botão de próximos eventos
+            // Botão de próximos eventos no menu
             document.getElementById('menu-upcoming-events-btn')?.addEventListener('click', () => {
                 closeMenu();
+                showUpcomingEventsModal();
+            });
+            
+            // Clicar na foto do usuário abre modal de próximos eventos
+            document.getElementById('user-photo-btn')?.addEventListener('click', () => {
                 showUpcomingEventsModal();
             });
             
