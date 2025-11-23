@@ -374,21 +374,7 @@
                     <p class="text-sm text-gray-600 mb-3"><strong>1º - Comece escolhendo o dia na lista</strong></p>
                     <select id="culto-select" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 text-base" style="--tw-ring-color: #151b29; border-color: #e5e5e5;">
                         <option value="">Escolha uma data...</option>
-                        <option value="2025-11-20|19:00|Quinta">20/11 Quinta (chegar 19h)</option>
-                        <option value="2025-11-23|09:00|Domingo">23/11 Domingo (chegar 09h)</option>
-                        <option value="2025-11-27|19:00|Quinta">27/11 Quinta (chegar 19h)</option>
-                        <option value="2025-11-30|09:00|Domingo">30/11 Domingo (chegar 09h)</option>
-                        <option value="2025-12-04|19:00|Quinta">04/12 Quinta (chegar 19h)</option>
-                        <option value="2025-12-07|09:00|Domingo">07/12 Domingo (chegar 09h)</option>
-                        <option value="2025-12-11|19:00|Quinta - Pré Inauguração">11/12 Quinta | Pré Inauguração (chegar 19h)</option>
-                        <option value="2025-12-12|19:00|Sexta - Ensaio Geral">12/12 Sexta | Ensaio Geral (chegar 19h)</option>
-                        <option value="2025-12-13|00:00|Sábado - Inauguração">13/12 Sábado | Inauguração (horário a definir)</option>
-                        <option value="2025-12-14|09:00|Domingo - Batismo">14/12 Domingo | Batismo (chegar 9h)</option>
-                        <option value="2025-12-18|19:00|Quinta do Encontro">18/12 Quinta do Encontro (chegar 19h)</option>
-                        <option value="2025-12-21|09:00|Domingo">21/12 Culto de Domingo (chegar 09h)</option>
-                        <option value="2025-12-25|19:00|Quinta - Natal">25/12 Quinta (chegar 19h)</option>
-                        <option value="2025-12-28|09:00|Domingo">28/12 Domingo (chegar 09h)</option>
-                        <option value="2025-12-31|00:00|Culto da Virada">31/12 Culto da Virada (horário a definir)</option>
+                        <!-- Datas serão carregadas dinamicamente pelo admin -->
                     </select>
                 </div>
 
@@ -539,6 +525,41 @@
             </div>
         </main>
     </div>
+
+    <!-- Página de Gerenciar Administradores -->
+    <div id="manage-admins-page" class="hidden">
+        <!-- Header -->
+        <header class="zele-primary text-white" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button id="back-from-manage-admins" class="zele-btn p-2 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <img src="https://raw.githubusercontent.com/VolunteersZele/escala/main/Volunteers%20logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <h1 class="text-2xl font-bold">Gerenciar Administradores</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="container mx-auto px-4 py-8 max-w-4xl">
+            <div class="card-float rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">👥 Usuários do Sistema</h2>
+                <p class="text-sm text-gray-600 mb-6">Clique no botão ao lado do nome para promover ou remover permissões de administrador.</p>
+                
+                <!-- Lista de Usuários -->
+                <div id="users-list" class="space-y-3">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #377db8;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
     </div>
 
     <!-- Menu Lateral -->
@@ -593,6 +614,16 @@
                     </div>
                 </button>
 
+                <button id="menu-manage-admins-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left" style="display: none;">
+                    <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-gray-800">Gerenciar Administradores</p>
+                        <p class="text-xs text-gray-600">Adicionar/remover admins</p>
+                    </div>
+                </button>
+
                 <button id="menu-blocked-attempts-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left" style="display: none;">
                     <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -626,7 +657,7 @@
 
             <!-- Versão -->
             <div class="mt-8 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
-                <p>Zele Server v2.0</p>
+                <p>Zele Server v2.3</p>
                 <p class="mt-1">Servir é a linguagem do céu</p>
             </div>
         </div>
@@ -692,8 +723,8 @@
     <script>
         // 🔧 CONFIGURAÇÕES DO SISTEMA
         const CONFIG = {
-            DEBUG_MODE: false, // Alterar para false em produção
-            SCHEMA_VERSION: '2.2.0',
+            DEBUG_MODE: true, // ⚠️ ATIVADO PARA TESTES - Alterar para false em produção
+            SCHEMA_VERSION: '2.3.0',
             MAX_RETRIES: 3,
             RETRY_DELAY: 1000, // ms
             BACKUP_ENABLED: true,
@@ -716,8 +747,17 @@
             if (typeof emailjs !== 'undefined' && CONFIG.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
                 emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
                 console.log('📧 EmailJS inicializado');
-            }        // Aguardar Firebase estar pronto
+            }        
+        // ========================================
+        // 🚀 INICIALIZAÇÃO DO APP - v2.3.0
+        // ========================================
+        // Aguardar Firebase estar pronto
         function initApp() {
+            console.log('═══════════════════════════════════════════');
+            console.log('🚀 ZELE SERVER v' + CONFIG.SCHEMA_VERSION);
+            console.log('📋 DEBUG MODE:', CONFIG.DEBUG_MODE ? 'ATIVADO ⚠️' : 'DESATIVADO');
+            console.log('═══════════════════════════════════════════');
+            
             logger.log('🚀 App iniciando... v' + CONFIG.SCHEMA_VERSION);
             
             // Verificar se Firebase foi inicializado
@@ -1047,6 +1087,27 @@
                 });
             }
 
+            // Navegação para página de gerenciar admins
+            const menuManageAdminsBtn = document.getElementById('menu-manage-admins-btn');
+            const backFromManageAdminsBtn = document.getElementById('back-from-manage-admins');
+            const manageAdminsPage = document.getElementById('manage-admins-page');
+
+            if (menuManageAdminsBtn) {
+                menuManageAdminsBtn.addEventListener('click', () => {
+                    closeMenu();
+                    appContainer.classList.add('hidden');
+                    manageAdminsPage.classList.remove('hidden');
+                    loadUsersList(); // Carregar lista de usuários
+                });
+            }
+
+            if (backFromManageAdminsBtn) {
+                backFromManageAdminsBtn.addEventListener('click', () => {
+                    manageAdminsPage.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                });
+            }
+
             // ===================================
             // DETECÇÃO E INSTALAÇÃO PWA
             // ===================================
@@ -1330,6 +1391,7 @@
                         if (data.role === 'admin') {
                             isAdmin = true;
                             document.getElementById('menu-admin-btn').style.display = 'block';
+                            document.getElementById('menu-manage-admins-btn').style.display = 'block';
                             document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
                             console.log('✅ Usuário É ADMINISTRADOR');
                             return true;
@@ -1342,6 +1404,7 @@
                     
                     isAdmin = false;
                     document.getElementById('menu-admin-btn').style.display = 'none';
+                    document.getElementById('menu-manage-admins-btn').style.display = 'none';
                     document.getElementById('menu-blocked-attempts-btn').style.display = 'none';
                     return false;
                 } catch (error) {
@@ -1776,11 +1839,13 @@
             // Carregar datas disponíveis do Firestore
             async function loadAvailableDates() {
                 try {
+                    console.log('🔄 Carregando datas disponíveis...');
                     const { doc, getDoc } = window.firestoreMethods;
                     const datesDoc = await getDoc(doc(window.firebaseDb, 'config', 'availableDates'));
                     
                     if (datesDoc.exists()) {
                         availableDates = datesDoc.data().dates || [];
+                        console.log('📦 Datas encontradas no Firestore:', availableDates.length);
                         
                         // Adicionar teamLimits padrão se não existir (retrocompatibilidade)
                         availableDates = availableDates.map(date => {
@@ -1802,39 +1867,26 @@
                         
                         // Filtrar apenas eventos futuros
                         const now = new Date();
+                        const initialCount = availableDates.length;
                         availableDates = availableDates.filter(d => {
                             const [date, time] = d.value.split('|');
                             const eventDateTime = new Date(date + 'T' + time);
                             return eventDateTime > now;
                         });
                         
-                        console.log(`🧹 ${availableDates.length} eventos futuros carregados`);
+                        console.log(`🧹 Filtrado: ${initialCount} → ${availableDates.length} eventos futuros`);
                     } else {
-                        // Datas padrão iniciais com teamLimits
-                        availableDates = [
-                            { value: "2025-11-20|19:00|Quinta", text: "20/11 Quinta (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-11-23|09:00|Domingo", text: "23/11 Domingo (chegar 09h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-11-27|19:00|Quinta", text: "27/11 Quinta (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-11-30|09:00|Domingo", text: "30/11 Domingo (chegar 09h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-04|19:00|Quinta", text: "04/12 Quinta (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-07|09:00|Domingo", text: "07/12 Domingo (chegar 09h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-11|19:00|Quinta - Pré Inauguração", text: "11/12 Quinta | Pré Inauguração (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-12|19:00|Sexta - Ensaio Geral", text: "12/12 Sexta | Ensaio Geral (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-13|00:00|Sábado - Inauguração", text: "13/12 Sábado | Inauguração (horário a definir)", teamLimits: {welcome: 6, backstage: 6, parking: 6, kids: 6} },
-                            { value: "2025-12-14|09:00|Domingo - Batismo", text: "14/12 Domingo | Batismo (chegar 9h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-18|19:00|Quinta do Encontro", text: "18/12 Quinta do Encontro (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-21|09:00|Domingo", text: "21/12 Culto de Domingo (chegar 09h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-25|19:00|Quinta - Natal", text: "25/12 Quinta (chegar 19h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-28|09:00|Domingo", text: "28/12 Domingo (chegar 09h)", teamLimits: {welcome: 4, backstage: 4, parking: 4, kids: 4} },
-                            { value: "2025-12-31|00:00|Culto da Virada", text: "31/12 Culto da Virada (horário a definir)", teamLimits: {welcome: 6, backstage: 6, parking: 6, kids: 6} }
-                        ];
+                        // Documento não existe - lista vazia (admin deve adicionar)
+                        availableDates = [];
+                        console.log('📭 Nenhuma data cadastrada. Admin deve adicionar datas.');
                         
-                        // Salvar datas padrão no Firestore
+                        // Criar documento vazio no Firestore
                         const { setDoc } = window.firestoreMethods;
-                        await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), { dates: availableDates });
+                        await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), { dates: [] });
+                        console.log('✅ Documento availableDates criado');
                     }
                     
-                    console.log('✅ Datas carregadas:', availableDates.length);
+                    console.log('✅ Datas disponíveis carregadas:', availableDates.length);
                     
                     // Renderizar lista de datas para admin
                     if (isAdmin) {
@@ -1842,6 +1894,7 @@
                     }
                 } catch (error) {
                     console.error('❌ Erro ao carregar datas:', error);
+                    availableDates = [];
                 }
             }
 
@@ -2436,10 +2489,15 @@
 
             // Adicionar nova data (apenas admin)
             async function addNewDate() {
+                console.log('🔵 addNewDate() chamada');
+                
                 // Validar campos com feedback visual
                 if (!validateAdminFields()) {
+                    console.log('❌ Validação falhou');
                     return;
                 }
+                
+                console.log('✅ Validação passou');
                 
                 const dateInput = document.getElementById('admin-new-date').value;
                 const timeInput = document.getElementById('admin-new-time').value;
@@ -2450,6 +2508,8 @@
                     parking: parseInt(document.getElementById('admin-limit-parking').value) || 4,
                     kids: parseInt(document.getElementById('admin-limit-kids').value) || 4
                 };
+                
+                console.log('📝 Dados coletados:', { dateInput, timeInput, eventInput, teamLimits });
                 
                 // Formatar data para exibição (dd/mm)
                 const dateObj = new Date(dateInput + 'T12:00:00');
@@ -2467,9 +2527,12 @@
                 const timeDisplay = timeInput ? `(chegar ${timeInput})` : '(horário a definir)';
                 const text = `${day}/${month} ${weekdayCapitalized}${eventInput ? ' | ' + eventInput : ''} ${timeDisplay}`;
                 
+                console.log('📅 Evento formatado:', { value, text });
+                
                 // Verificar se já existe
                 const exists = availableDates.some(d => d.value === value);
                 if (exists) {
+                    console.log('⚠️ Data já existe');
                     showModal('Esta data já está cadastrada!');
                     return;
                 }
@@ -2480,6 +2543,8 @@
                     true,
                     async () => {
                         try {
+                            console.log('💾 Salvando evento...');
+                            
                             // Adicionar à lista com teamLimits e schema version
                             availableDates.push({ 
                                 value, 
@@ -2490,6 +2555,8 @@
                                 createdBy: currentUser?.email || 'unknown'
                             });
                             
+                            console.log('📦 Array atualizado. Total:', availableDates.length);
+                            
                             // Salvar no Firestore com retry
                             await firestoreRetry(async () => {
                                 const { doc, setDoc } = window.firestoreMethods;
@@ -2499,6 +2566,8 @@
                                     version: CONFIG.SCHEMA_VERSION
                                 });
                             }, 'Salvar evento');
+                            
+                            console.log('✅ Salvo no Firestore');
                             
                             // Backup se habilitado
                             if (CONFIG.BACKUP_ENABLED) {
@@ -2516,10 +2585,14 @@
                             document.getElementById('admin-limit-parking').value = '4';
                             document.getElementById('admin-limit-kids').value = '4';
                             
+                            console.log('🔄 Atualizando listas...');
+                            
                             // Atualizar lista
                             renderAdminDatesList();
                             await loadUserEscalas();
                             await loadAllEscalas();
+                            
+                            console.log('✅ Evento adicionado com sucesso!');
                             
                         } catch (error) {
                             logger.error('❌ Erro ao salvar data:', error);
@@ -2686,6 +2759,126 @@
                             );
                         });
                     });
+                }
+            }
+
+            // ===== GERENCIAMENTO DE ADMINISTRADORES =====
+
+            // Carregar lista de todos os usuários
+            async function loadUsersList() {
+                try {
+                    const { collection, getDocs } = window.firestoreMethods;
+                    const usersSnapshot = await getDocs(collection(window.firebaseDb, 'users'));
+                    
+                    const usersList = document.getElementById('users-list');
+                    
+                    if (usersSnapshot.empty) {
+                        usersList.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum usuário encontrado no sistema.</p>';
+                        return;
+                    }
+                    
+                    const users = [];
+                    usersSnapshot.forEach(doc => {
+                        users.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordenar por nome
+                    users.sort((a, b) => {
+                        const nameA = a.displayName || a.email || '';
+                        const nameB = b.displayName || b.email || '';
+                        return nameA.localeCompare(nameB);
+                    });
+                    
+                    let html = '';
+                    users.forEach(user => {
+                        const isUserAdmin = user.role === 'admin';
+                        const isCurrentUser = user.id === currentUser.uid;
+                        const displayName = user.displayName || 'Sem nome';
+                        const email = user.email || 'Sem email';
+                        const photoURL = user.photoURL || 'https://raw.githubusercontent.com/VolunteersZele/escala/main/Zele%20logo.png';
+                        
+                        html += `
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <img src="${photoURL}" alt="${displayName}" class="w-12 h-12 rounded-full object-cover">
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-800">
+                                            ${displayName}
+                                            ${isUserAdmin ? '<span class="text-yellow-600">👑</span>' : ''}
+                                            ${isCurrentUser ? '<span class="text-xs text-gray-500">(você)</span>' : ''}
+                                        </p>
+                                        <p class="text-sm text-gray-600">${email}</p>
+                                        <p class="text-xs text-gray-500 mt-1">ID: ${user.id}</p>
+                                    </div>
+                                </div>
+                                ${!isCurrentUser ? `
+                                    <button 
+                                        class="toggle-admin-btn px-4 py-2 rounded-lg font-semibold text-white transition ${isUserAdmin ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}"
+                                        data-user-id="${user.id}"
+                                        data-user-name="${displayName}"
+                                        data-is-admin="${isUserAdmin}"
+                                    >
+                                        ${isUserAdmin ? '❌ Remover Admin' : '✅ Tornar Admin'}
+                                    </button>
+                                ` : '<span class="text-xs text-gray-500 px-4">Você não pode alterar seu próprio status</span>'}
+                            </div>
+                        `;
+                    });
+                    
+                    usersList.innerHTML = html;
+                    
+                    // Adicionar event listeners aos botões
+                    document.querySelectorAll('.toggle-admin-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.target.dataset.userId;
+                            const userName = e.target.dataset.userName;
+                            const isCurrentlyAdmin = e.target.dataset.isAdmin === 'true';
+                            toggleAdminStatus(userId, userName, isCurrentlyAdmin);
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar usuários:', error);
+                    document.getElementById('users-list').innerHTML = 
+                        '<p class="text-center text-red-500 py-8">Erro ao carregar usuários. Tente novamente.</p>';
+                }
+            }
+
+            // Alternar status de administrador
+            async function toggleAdminStatus(userId, userName, isCurrentlyAdmin) {
+                const action = isCurrentlyAdmin ? 'remover permissões de administrador' : 'tornar administrador';
+                const confirmation = await new Promise(resolve => {
+                    showModal(
+                        `Tem certeza que deseja ${action} para:\n\n${userName}?`,
+                        true,
+                        () => resolve(true),
+                        true,
+                        () => resolve(false)
+                    );
+                });
+                
+                if (!confirmation) return;
+                
+                try {
+                    const { doc, setDoc } = window.firestoreMethods;
+                    const newRole = isCurrentlyAdmin ? 'user' : 'admin';
+                    
+                    await setDoc(doc(window.firebaseDb, 'users', userId), {
+                        role: newRole
+                    }, { merge: true });
+                    
+                    const successMessage = isCurrentlyAdmin 
+                        ? `✅ Permissões de administrador removidas de ${userName}`
+                        : `✅ ${userName} agora é administrador!`;
+                    
+                    showModal(successMessage);
+                    
+                    // Recarregar lista
+                    loadUsersList();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao alterar status:', error);
+                    showModal('❌ Erro ao alterar status de administrador. Tente novamente.');
                 }
             }
 
