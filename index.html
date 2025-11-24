@@ -1147,6 +1147,14 @@
                        document.referrer.includes('android-app://');
             }
 
+            // Capturar evento beforeinstallprompt GLOBALMENTE (antes do login)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('📱 beforeinstallprompt disparado (Android/Windows/Desktop)');
+                e.preventDefault();
+                deferredPrompt = e;
+                console.log('✅ Prompt de instalação capturado e salvo');
+            });
+
             // Configurar botão de instalação
             function setupInstallButton() {
                 isIOS = detectIOS();
@@ -1155,6 +1163,7 @@
                 // Não mostrar se já estiver instalado
                 if (isInStandaloneMode()) {
                     console.log('✅ App já está instalado');
+                    installBtn.style.display = 'none';
                     return;
                 }
 
@@ -1167,26 +1176,24 @@
                         document.getElementById('ios-install-modal').classList.remove('hidden');
                     });
                 } else {
-                    // Android/Desktop/Windows: Aguardar evento beforeinstallprompt
-                    window.addEventListener('beforeinstallprompt', (e) => {
-                        console.log('📱 beforeinstallprompt disparado (Android/Windows/Desktop)');
-                        e.preventDefault();
-                        deferredPrompt = e;
-                        installBtn.style.display = 'block';
-                        console.log('✅ Botão de instalação disponível');
-                    });
+                    // Android/Desktop/Windows: Mostrar botão se houver deferredPrompt OU sempre (com fallback)
+                    console.log('💻 Desktop/Android detectado');
+                    console.log('🔍 deferredPrompt disponível?', !!deferredPrompt);
+                    
+                    // Sempre mostrar botão no desktop (com instruções manuais se necessário)
+                    installBtn.style.display = 'block';
 
                     installBtn.addEventListener('click', async () => {
                         console.log('🖱️ Botão de instalação clicado');
                         if (!deferredPrompt) {
-                            console.log('❌ Prompt de instalação não disponível');
-                            // Instruções manuais para Windows
-                            showModal('Para instalar no Windows:<br><br>1. Chrome: Clique no ícone de instalação (➕) na barra de endereço<br>2. Edge: Menu (⋯) → Apps → Instalar Zele Server<br>3. Ou pressione Ctrl+Shift+A', false, null, false, null, '💻');
+                            console.log('❌ Prompt de instalação não disponível - mostrando instruções manuais');
+                            // Instruções manuais para Windows/Desktop
+                            showModal('Para instalar:<br><br><strong>Chrome:</strong><br>• Clique no ícone ⊕ na barra de endereço<br>• Ou vá em Menu (⋮) → Instalar Zele Server<br><br><strong>Edge:</strong><br>• Menu (⋯) → Apps → Instalar Zele Server<br>• Ou pressione Ctrl+Shift+A', false, null, false, null, '💻');
                             return;
                         }
 
                         try {
-                            console.log('🚀 Iniciando instalação...');
+                            console.log('🚀 Iniciando instalação automática...');
                             deferredPrompt.prompt();
                             const { outcome } = await deferredPrompt.userChoice;
                             console.log(`👤 Usuário escolheu: ${outcome}`);
@@ -1204,7 +1211,7 @@
                         
                         deferredPrompt = null;
                         closeMenu();
-                    });
+                    }, { once: false }); // Permitir múltiplos cliques
                 }
 
                 // Listener quando o app é instalado
