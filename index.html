@@ -780,12 +780,19 @@
                         return result;
                     } catch (error) {
                         lastError = error;
+                        console.error(`🔍 DEBUG - Erro na tentativa ${attempt}:`, {
+                            name: error.name,
+                            message: error.message,
+                            code: error.code,
+                            stack: error.stack
+                        });
                         logger.warn(`⚠️ ${operationName} - Falha na tentativa ${attempt}:`, error.message);
                         if (attempt < CONFIG.MAX_RETRIES) {
                             await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * attempt));
                         }
                     }
                 }
+                console.error(`🔍 DEBUG - Erro final após todas tentativas:`, lastError);
                 logger.error(`❌ ${operationName} - Todas as tentativas falharam`);
                 throw lastError;
             }
@@ -2643,17 +2650,40 @@
                             console.log('📦 Array atualizado. Total:', availableDates.length);
                             console.log('🔍 DEBUG - Array completo:', JSON.stringify(availableDates, null, 2));
                             
+                            // Verificar se está autenticado
+                            console.log('🔍 DEBUG - Usuário atual:', currentUser?.email);
+                            console.log('🔍 DEBUG - É admin?', isAdmin);
+                            console.log('🔍 DEBUG - firebaseDb existe?', !!window.firebaseDb);
+                            console.log('🔍 DEBUG - firestoreMethods existe?', !!window.firestoreMethods);
+                            
+                            if (!currentUser) {
+                                throw new Error('Usuário não autenticado');
+                            }
+                            
+                            if (!isAdmin) {
+                                throw new Error('Usuário não é administrador');
+                            }
+                            
                             // Salvar no Firestore com retry
                             console.log('🔍 DEBUG - Iniciando salvamento no Firestore...');
                             await firestoreRetry(async () => {
                                 const { doc, setDoc } = window.firestoreMethods;
+                                
+                                if (!doc || !setDoc) {
+                                    throw new Error('Métodos Firestore não disponíveis');
+                                }
+                                
                                 const dataToSave = { 
                                     dates: availableDates,
                                     lastUpdated: new Date().toISOString(),
                                     version: CONFIG.SCHEMA_VERSION
                                 };
                                 console.log('🔍 DEBUG - Dados a salvar:', JSON.stringify(dataToSave, null, 2));
-                                await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), dataToSave);
+                                
+                                const docRef = doc(window.firebaseDb, 'config', 'availableDates');
+                                console.log('🔍 DEBUG - Referência do documento criada');
+                                
+                                await setDoc(docRef, dataToSave);
                                 console.log('🔍 DEBUG - setDoc completado');
                             }, 'Salvar evento');
                             
@@ -2685,8 +2715,13 @@
                             console.log('✅ Evento adicionado com sucesso!');
                             
                         } catch (error) {
+                            console.error('❌ ERRO DETALHADO ao salvar data:', error);
+                            console.error('❌ Tipo do erro:', error.name);
+                            console.error('❌ Mensagem:', error.message);
+                            console.error('❌ Code:', error.code);
+                            console.error('❌ Stack:', error.stack);
                             logger.error('❌ Erro ao salvar data:', error);
-                            showModal('Erro ao adicionar data. Verifique sua conexão e tente novamente.', false, null, false, null, '❌');
+                            showModal(`Erro ao adicionar data: ${error.message || error.code || 'Desconhecido'}. Verifique o console (F12) para mais detalhes.`, false, null, false, null, '❌');
                         }
                     },
                     false,
