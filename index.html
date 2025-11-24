@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zele Server</title>
-    <meta name="application-name" content="Volunteer">
-    <meta name="apple-mobile-web-app-title" content="Volunteer">
+    <meta name="application-name" content="Zele Server">
+    <meta name="apple-mobile-web-app-title" content="Zele Server">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#151b29">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZvbHVudGVlcnMgWmVsZSIsCiAgInNob3J0X25hbWUiOiAiVm9sdW50ZWVycyBaZWxlIiwKICAiZGVzY3JpcHRpb24iOiAiU2VydmlyIMOpIGEgbGluZ3VhZ2VtIGRvIGPDqXUiLAogICJzdGFydF91cmwiOiAiL2VzY2FsYS8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNjZGM4YzAiLAogICJ0aGVtZV9jb2xvciI6ICIjMTUxYjI5IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiWmVsZSUyMGxvZ28ucG5nIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIlplbGUlMjBsb2dvLnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfQogIF0KfQ==">
-    <link rel="apple-touch-icon" href="Zele logo.png">
-    <link rel="icon" type="image/png" href="Zele logo.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="https://github.com/escalaserver/zele/blob/main/Volunteers%20logo.png?raw=true">
+    <link rel="icon" type="image/png" href="https://github.com/escalaserver/zele/blob/main/Volunteers%20logo.png?raw=true">
+    
+    <!-- Meta tags adicionais para Windows/Desktop PWA -->
+    <meta name="msapplication-TileColor" content="#151b29">
+    <meta name="msapplication-TileImage" content="https://github.com/escalaserver/zele/blob/main/Volunteers%20logo.png?raw=true">
+    <meta name="msapplication-config" content="none">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -541,7 +547,7 @@
                             </svg>
                         </button>
                         <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
-                        <h1 class="text-2xl font-bold">Gerenciar Administradores</h1>
+                        <h1 class="text-2xl font-bold">Gerenciar Acesso</h1>
                     </div>
                 </div>
             </div>
@@ -551,7 +557,7 @@
         <main class="container mx-auto px-4 py-8 max-w-4xl">
             <div class="card-float rounded-xl p-6">
                 <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">👥 Usuários do Sistema</h2>
-                <p class="text-sm text-gray-600 mb-6">Clique no botão ao lado do nome para promover ou remover permissões de administrador.</p>
+                <p class="text-sm text-gray-600 mb-6">Gerencie permissões, bloqueie acesso ou exclua usuários do sistema.</p>
                 
                 <!-- Lista de Usuários -->
                 <div id="users-list" class="space-y-3">
@@ -621,8 +627,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
                     <div>
-                        <p class="font-semibold text-gray-800">Gerenciar Administradores</p>
-                        <p class="text-xs text-gray-600">Adicionar/remover admins</p>
+                        <p class="font-semibold text-gray-800">Gerenciar Acesso</p>
+                        <p class="text-xs text-gray-600">Gerenciar usuários e permissões</p>
                     </div>
                 </button>
 
@@ -1161,30 +1167,39 @@
                         document.getElementById('ios-install-modal').classList.remove('hidden');
                     });
                 } else {
-                    // Android/Desktop: Aguardar evento beforeinstallprompt
+                    // Android/Desktop/Windows: Aguardar evento beforeinstallprompt
                     window.addEventListener('beforeinstallprompt', (e) => {
-                        console.log('📱 beforeinstallprompt disparado');
+                        console.log('📱 beforeinstallprompt disparado (Android/Windows/Desktop)');
                         e.preventDefault();
                         deferredPrompt = e;
                         installBtn.style.display = 'block';
+                        console.log('✅ Botão de instalação disponível');
                     });
 
                     installBtn.addEventListener('click', async () => {
+                        console.log('🖱️ Botão de instalação clicado');
                         if (!deferredPrompt) {
                             console.log('❌ Prompt de instalação não disponível');
-                            showModal('App já está instalado ou não pode ser instalado neste dispositivo.');
+                            // Instruções manuais para Windows
+                            showModal('Para instalar no Windows:<br><br>1. Chrome: Clique no ícone de instalação (➕) na barra de endereço<br>2. Edge: Menu (⋯) → Apps → Instalar Zele Server<br>3. Ou pressione Ctrl+Shift+A', false, null, false, null, '💻');
                             return;
                         }
 
-                        deferredPrompt.prompt();
-                        const { outcome } = await deferredPrompt.userChoice;
-                        console.log(`👤 Usuário escolheu: ${outcome}`);
-                        
-                        if (outcome === 'accepted') {
-                            showModal('Aguarde, o app será instalado em instantes!');
-                            installBtn.style.display = 'none';
-                        } else {
-                            showModal('Instalação cancelada.');
+                        try {
+                            console.log('🚀 Iniciando instalação...');
+                            deferredPrompt.prompt();
+                            const { outcome } = await deferredPrompt.userChoice;
+                            console.log(`👤 Usuário escolheu: ${outcome}`);
+                            
+                            if (outcome === 'accepted') {
+                                showModal('✅ App instalado com sucesso!');
+                                installBtn.style.display = 'none';
+                            } else {
+                                showModal('Instalação cancelada.');
+                            }
+                        } catch (error) {
+                            console.error('❌ Erro na instalação:', error);
+                            showModal('Erro ao instalar. Tente pelo menu do navegador.');
                         }
                         
                         deferredPrompt = null;
@@ -1407,15 +1422,18 @@
                         email: user.email,
                         displayName: user.displayName || user.email.split('@')[0],
                         photoURL: user.photoURL || '',
-                        lastLogin: new Date().toISOString()
+                        lastLogin: new Date().toISOString(),
+                        lastLoginFormatted: new Date().toLocaleString('pt-BR')
                     };
                     
                     if (userDoc.exists()) {
-                        // Atualizar apenas dados do perfil, mantendo role
+                        // Atualizar apenas dados do perfil, mantendo role e blocked
                         const existingData = userDoc.data();
                         await setDoc(userDocRef, {
                             ...userData,
-                            role: existingData.role || 'user' // Preservar role existente
+                            role: existingData.role || 'user', // Preservar role existente
+                            blocked: existingData.blocked || false, // Preservar status de bloqueio
+                            createdAt: existingData.createdAt || new Date().toISOString()
                         });
                         logger.log('✅ Dados do usuário atualizados');
                     } else {
@@ -1423,6 +1441,7 @@
                         await setDoc(userDocRef, {
                             ...userData,
                             role: 'user',
+                            blocked: false,
                             createdAt: new Date().toISOString()
                         });
                         logger.log('✅ Novo usuário criado no Firestore');
@@ -1437,6 +1456,23 @@
                 if (!user) {
                     console.log('⚠️ Nenhum usuário para verificar admin');
                     return false;
+                }
+                
+                // Verificar se usuário está bloqueado
+                try {
+                    const { doc, getDoc } = window.firestoreMethods;
+                    const userDoc = await getDoc(doc(window.firebaseDb, 'users', user.uid));
+                    
+                    if (userDoc.exists() && userDoc.data().blocked === true) {
+                        console.log('🚫 Usuário bloqueado. Fazendo logout...');
+                        showModal('Seu acesso foi bloqueado. Entre em contato com o administrador.', false, null, false, async () => {
+                            await window.firebaseAuthMethods.signOut(window.firebaseAuth);
+                            window.location.reload();
+                        }, '🚫');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao verificar bloqueio:', error);
                 }
                 
                 // Salvar/atualizar dados do usuário
@@ -2983,7 +3019,10 @@
                             email: data.email || 'Sem email',
                             displayName: data.displayName || data.email?.split('@')[0] || 'Sem nome',
                             photoURL: data.photoURL || '',
-                            role: data.role || 'user'
+                            role: data.role || 'user',
+                            blocked: data.blocked || false,
+                            lastLoginFormatted: data.lastLoginFormatted || 'Nunca acessou',
+                            createdAt: data.createdAt || ''
                         });
                     });
                     
@@ -3001,31 +3040,69 @@
                         const displayName = user.displayName || 'Sem nome';
                         const email = user.email || 'Sem email';
                         const photoURL = user.photoURL || 'Zele logo.png';
+                        const isBlocked = user.blocked === true;
+                        const lastLogin = user.lastLoginFormatted || 'Nunca acessou';
                         
                         html += `
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex items-center gap-3 flex-1">
-                                    <img src="${photoURL}" alt="${displayName}" class="w-12 h-12 rounded-full object-cover">
-                                    <div class="flex-1">
-                                        <p class="font-semibold text-gray-800">
-                                            ${displayName}
-                                            ${isUserAdmin ? '<span class="text-yellow-600">👑</span>' : ''}
-                                            ${isCurrentUser ? '<span class="text-xs text-gray-500">(você)</span>' : ''}
+                            <div class="border-l-4 ${isBlocked ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'} rounded-lg p-4 mb-3">
+                                <div class="flex items-start gap-4">
+                                    <!-- Foto -->
+                                    <img src="${photoURL}" alt="${displayName}" class="w-16 h-16 rounded-full object-cover flex-shrink-0 ${isBlocked ? 'opacity-50 grayscale' : ''}">
+                                    
+                                    <!-- Informações -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <p class="font-bold text-gray-800 truncate">
+                                                ${displayName}
+                                                ${isUserAdmin ? '<span class="text-yellow-600">👑</span>' : ''}
+                                                ${isBlocked ? '<span class="text-red-600">🚫</span>' : ''}
+                                                ${isCurrentUser ? '<span class="text-xs text-gray-500">(você)</span>' : ''}
+                                            </p>
+                                        </div>
+                                        <p class="text-sm text-gray-600 truncate">${email}</p>
+                                        <p class="text-xs text-gray-500 mt-1">ID: <code class="bg-gray-200 px-1 rounded">${user.id}</code></p>
+                                        <p class="text-xs text-gray-600 mt-2">
+                                            <strong>🕐 Último acesso:</strong> ${lastLogin}
                                         </p>
-                                        <p class="text-sm text-gray-600">${email}</p>
-                                        <p class="text-xs text-gray-500 mt-1">ID: ${user.id}</p>
+                                        ${isBlocked ? '<p class="text-xs text-red-600 font-bold mt-1">⚠️ Usuário bloqueado</p>' : ''}
                                     </div>
+                                    
+                                    <!-- Botões de Ação -->
+                                    ${!isCurrentUser ? `
+                                        <div class="flex flex-col gap-2 flex-shrink-0">
+                                            <!-- Tornar/Remover Admin -->
+                                            <button 
+                                                class="toggle-admin-btn px-3 py-1.5 rounded-lg font-semibold text-white text-xs transition ${isUserAdmin ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}"
+                                                data-user-id="${user.id}"
+                                                data-user-name="${displayName}"
+                                                data-is-admin="${isUserAdmin}"
+                                                title="${isUserAdmin ? 'Remover permissão de admin' : 'Tornar administrador'}">
+                                                ${isUserAdmin ? '👑 Remover Admin' : '👑 Tornar Admin'}
+                                            </button>
+                                            
+                                            <!-- Bloquear/Desbloquear -->
+                                            <button 
+                                                class="toggle-block-btn px-3 py-1.5 rounded-lg font-semibold text-white text-xs transition ${isBlocked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'}"
+                                                data-user-id="${user.id}"
+                                                data-user-name="${displayName}"
+                                                data-is-blocked="${isBlocked}"
+                                                title="${isBlocked ? 'Desbloquear acesso' : 'Bloquear acesso'}">
+                                                ${isBlocked ? '🔓 Desbloquear' : '🔒 Bloquear'}
+                                            </button>
+                                            
+                                            <!-- Excluir (só se bloqueado) -->
+                                            ${isBlocked ? `
+                                                <button 
+                                                    class="delete-user-btn px-3 py-1.5 rounded-lg font-semibold text-white text-xs transition bg-red-700 hover:bg-red-800"
+                                                    data-user-id="${user.id}"
+                                                    data-user-name="${displayName}"
+                                                    title="Excluir usuário permanentemente">
+                                                    🗑️ Excluir
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    ` : '<span class="text-xs text-gray-500 text-center">Você não pode<br>alterar seu<br>próprio status</span>'}
                                 </div>
-                                ${!isCurrentUser ? `
-                                    <button 
-                                        class="toggle-admin-btn px-4 py-2 rounded-lg font-semibold text-white transition ${isUserAdmin ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}"
-                                        data-user-id="${user.id}"
-                                        data-user-name="${displayName}"
-                                        data-is-admin="${isUserAdmin}"
-                                    >
-                                        ${isUserAdmin ? '❌ Remover Admin' : '✅ Tornar Admin'}
-                                    </button>
-                                ` : '<span class="text-xs text-gray-500 px-4">Você não pode alterar seu próprio status</span>'}
                             </div>
                         `;
                     });
@@ -3035,10 +3112,27 @@
                     // Adicionar event listeners aos botões
                     document.querySelectorAll('.toggle-admin-btn').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            const userId = e.target.dataset.userId;
-                            const userName = e.target.dataset.userName;
-                            const isCurrentlyAdmin = e.target.dataset.isAdmin === 'true';
+                            const userId = e.currentTarget.dataset.userId;
+                            const userName = e.currentTarget.dataset.userName;
+                            const isCurrentlyAdmin = e.currentTarget.dataset.isAdmin === 'true';
                             toggleAdminStatus(userId, userName, isCurrentlyAdmin);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.toggle-block-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.currentTarget.dataset.userId;
+                            const userName = e.currentTarget.dataset.userName;
+                            const isCurrentlyBlocked = e.currentTarget.dataset.isBlocked === 'true';
+                            toggleBlockUser(userId, userName, isCurrentlyBlocked);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.currentTarget.dataset.userId;
+                            const userName = e.currentTarget.dataset.userName;
+                            deleteUser(userId, userName);
                         });
                     });
                     
@@ -3054,7 +3148,7 @@
                 const action = isCurrentlyAdmin ? 'remover permissões de administrador' : 'tornar administrador';
                 const confirmation = await new Promise(resolve => {
                     showModal(
-                        `Tem certeza que deseja ${action} para:\n\n${userName}?`,
+                        `Tem certeza que deseja ${action} para:<br><br><strong>${userName}</strong>?`,
                         true,
                         () => resolve(true),
                         true,
@@ -3084,6 +3178,7 @@
                             role: newRole,
                             displayName: userName,
                             email: userName, // Fallback
+                            blocked: false,
                             createdAt: new Date().toISOString()
                         });
                     }
@@ -3101,6 +3196,115 @@
                     console.error('❌ Erro ao alterar status:', error);
                     console.error('Detalhes do erro:', error.message);
                     showModal('❌ Erro ao alterar status de administrador. Tente novamente.');
+                }
+            }
+            
+            // Alternar bloqueio de usuário
+            async function toggleBlockUser(userId, userName, isCurrentlyBlocked) {
+                const action = isCurrentlyBlocked ? 'desbloquear' : 'bloquear';
+                const confirmation = await new Promise(resolve => {
+                    showModal(
+                        `Tem certeza que deseja ${action} o acesso de:<br><br><strong>${userName}</strong>?${!isCurrentlyBlocked ? '<br><br>⚠️ O usuário não conseguirá mais acessar o app até ser desbloqueado.' : ''}`,
+                        true,
+                        () => resolve(true),
+                        true,
+                        () => resolve(false)
+                    );
+                });
+                
+                if (!confirmation) return;
+                
+                try {
+                    const { doc, setDoc, getDoc } = window.firestoreMethods;
+                    const newBlockedStatus = !isCurrentlyBlocked;
+                    
+                    // Buscar dados atuais do usuário
+                    const userDocRef = doc(window.firebaseDb, 'users', userId);
+                    const userDoc = await getDoc(userDocRef);
+                    
+                    if (userDoc.exists()) {
+                        // Atualizar apenas o campo blocked
+                        await setDoc(userDocRef, {
+                            ...userDoc.data(),
+                            blocked: newBlockedStatus
+                        });
+                    } else {
+                        // Se não existe, criar documento básico
+                        await setDoc(userDocRef, {
+                            blocked: newBlockedStatus,
+                            role: 'user',
+                            displayName: userName,
+                            email: userName,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                    
+                    const successMessage = isCurrentlyBlocked 
+                        ? `✅ ${userName} foi desbloqueado e pode acessar o app novamente.`
+                        : `✅ ${userName} foi bloqueado e não consegue mais acessar o app.`;
+                    
+                    showModal(successMessage);
+                    
+                    // Recarregar lista
+                    await loadUsersList();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao alterar bloqueio:', error);
+                    console.error('Detalhes do erro:', error.message);
+                    showModal('❌ Erro ao alterar bloqueio de usuário. Tente novamente.');
+                }
+            }
+            
+            // Excluir usuário permanentemente (apenas se bloqueado)
+            async function deleteUser(userId, userName) {
+                const confirmation = await new Promise(resolve => {
+                    showModal(
+                        `<div class="text-left"><p class="text-center mb-4">⚠️ <strong>ATENÇÃO: Esta ação é irreversível!</strong></p><p>Tem certeza que deseja <strong>EXCLUIR PERMANENTEMENTE</strong> o usuário:</p><p class="text-center my-4 font-bold text-lg">${userName}</p><p class="text-red-600 font-bold">⚠️ Todas as escalas deste usuário serão deletadas de todos os eventos!</p></div>`,
+                        true,
+                        () => resolve(true),
+                        true,
+                        () => resolve(false)
+                    );
+                });
+                
+                if (!confirmation) return;
+                
+                try {
+                    const { doc, deleteDoc, collection, query, where, getDocs } = window.firestoreMethods;
+                    
+                    // 1. Deletar todas as escalas do usuário
+                    const escalasQuery = query(
+                        collection(window.firebaseDb, 'escalas'),
+                        where('userId', '==', userId)
+                    );
+                    
+                    const escalasSnapshot = await getDocs(escalasQuery);
+                    const deleteEscalasPromises = [];
+                    
+                    escalasSnapshot.forEach((docSnapshot) => {
+                        deleteEscalasPromises.push(
+                            deleteDoc(doc(window.firebaseDb, 'escalas', docSnapshot.id))
+                        );
+                    });
+                    
+                    await Promise.all(deleteEscalasPromises);
+                    console.log(`🗑️ ${deleteEscalasPromises.length} escala(s) deletada(s)`);
+                    
+                    // 2. Deletar o documento do usuário
+                    await deleteDoc(doc(window.firebaseDb, 'users', userId));
+                    console.log('🗑️ Usuário deletado do Firestore');
+                    
+                    showModal(`✅ ${userName} foi excluído permanentemente do sistema.<br><br>${deleteEscalasPromises.length} escala(s) foram deletadas.`);
+                    
+                    // Recarregar listas
+                    await loadUsersList();
+                    await loadUserEscalas();
+                    await loadAllEscalas();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao excluir usuário:', error);
+                    console.error('Detalhes do erro:', error.message);
+                    showModal('❌ Erro ao excluir usuário. Tente novamente.');
                 }
             }
 
@@ -3341,10 +3545,8 @@
         // ========================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // GitHub Pages usa subpasta /escala/
-                const swPath = window.location.pathname.includes('/escala/') 
-                    ? '/escala/service-worker.js'  // GitHub Pages
-                    : './service-worker.js';        // Local ou raiz
+                // GitHub Pages na raiz do repositório
+                const swPath = '/zele/service-worker.js';
                 
                 navigator.serviceWorker.register(swPath)
                     .then(reg => console.log('✅ Service Worker registrado:', swPath))
