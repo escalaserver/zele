@@ -1233,12 +1233,24 @@
             // Fechar modal de tentativas bloqueadas
             document.getElementById('close-blocked-modal')?.addEventListener('click', () => {
                 document.getElementById('blocked-attempts-modal').classList.add('hidden');
+                // Cancelar listener quando fechar o modal
+                if (blockedAttemptsUnsubscribe) {
+                    blockedAttemptsUnsubscribe();
+                    blockedAttemptsUnsubscribe = null;
+                    console.log('👂 Listener de tentativas bloqueadas cancelado');
+                }
             });
 
             // Fechar modal clicando fora
             document.getElementById('blocked-attempts-modal')?.addEventListener('click', (e) => {
                 if (e.target.id === 'blocked-attempts-modal') {
                     document.getElementById('blocked-attempts-modal').classList.add('hidden');
+                    // Cancelar listener quando fechar o modal
+                    if (blockedAttemptsUnsubscribe) {
+                        blockedAttemptsUnsubscribe();
+                        blockedAttemptsUnsubscribe = null;
+                        console.log('👂 Listener de tentativas bloqueadas cancelado');
+                    }
                 }
             });
 
@@ -2274,6 +2286,8 @@
             }
             
             // Carregar tentativas bloqueadas (apenas admin)
+            let blockedAttemptsUnsubscribe = null; // Guardar referência do listener
+            
             async function loadBlockedAttempts() {
                 if (!isAdmin) return;
                 
@@ -2286,44 +2300,70 @@
                 // Mostrar loading
                 listEl.innerHTML = '<p class="text-gray-500 text-center py-8">Carregando...</p>';
                 
+                // Cancelar listener anterior se existir
+                if (blockedAttemptsUnsubscribe) {
+                    blockedAttemptsUnsubscribe();
+                    blockedAttemptsUnsubscribe = null;
+                }
+                
                 try {
                     console.log('🔍 Verificando métodos disponíveis:', Object.keys(window.firestoreMethods || {}));
                     
-                    const { collection, getDocs, query, orderBy } = window.firestoreMethods || {};
+                    const { collection, query, orderBy, onSnapshot } = window.firestoreMethods || {};
                     
-                    if (!collection || !getDocs) {
+                    if (!collection) {
                         throw new Error('Métodos do Firestore não disponíveis. Recarregue a página.');
                     }
                     
-                    if (!query || !orderBy) {
-                        console.warn('⚠️ orderBy não disponível, carregando sem ordenação');
-                        // Fallback: carregar sem ordenação
-                        const querySnapshot = await getDocs(collection(window.firebaseDb, 'blockedAttempts'));
+                    // Criar query com ordenação
+                    let q;
+                    if (query && orderBy) {
+                        q = query(
+                            collection(window.firebaseDb, 'blockedAttempts'),
+                            orderBy('timestamp', 'desc')
+                        );
+                    } else {
+                        console.warn('⚠️ orderBy não disponível');
+                        q = collection(window.firebaseDb, 'blockedAttempts');
+                    }
+                    
+                    // Listener em tempo real
+                    if (onSnapshot) {
+                        console.log('👂 Configurando listener em tempo real...');
+                        blockedAttemptsUnsubscribe = onSnapshot(q, (querySnapshot) => {
+                            const attempts = [];
+                            querySnapshot.forEach((doc) => {
+                                attempts.push({ id: doc.id, ...doc.data() });
+                            });
+                            
+                            // Ordenar manualmente se orderBy não estiver disponível
+                            if (!orderBy) {
+                                attempts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                            }
+                            
+                            console.log('📋 Tentativas bloqueadas atualizadas em tempo real:', attempts.length);
+                            renderBlockedAttempts(attempts);
+                        }, (error) => {
+                            console.error('❌ Erro no listener:', error);
+                            listEl.innerHTML = `<p class="text-red-500 text-center py-8">❌ Erro ao monitorar dados.</p>`;
+                        });
+                    } else {
+                        // Fallback: usar getDocs (sem tempo real)
+                        console.warn('⚠️ onSnapshot não disponível, usando getDocs');
+                        const { getDocs } = window.firestoreMethods;
+                        const querySnapshot = await getDocs(q);
                         const attempts = [];
                         querySnapshot.forEach((doc) => {
                             attempts.push({ id: doc.id, ...doc.data() });
                         });
-                        // Ordenar manualmente
-                        attempts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                        console.log('📋 Tentativas bloqueadas carregadas (sem orderBy):', attempts.length);
+                        
+                        if (!orderBy) {
+                            attempts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        }
+                        
+                        console.log('📋 Tentativas bloqueadas carregadas:', attempts.length);
                         renderBlockedAttempts(attempts);
-                        return;
                     }
-                    
-                    // Carregar com ordenação
-                    const q = query(
-                        collection(window.firebaseDb, 'blockedAttempts'),
-                        orderBy('timestamp', 'desc')
-                    );
-                    const querySnapshot = await getDocs(q);
-                    
-                    const attempts = [];
-                    querySnapshot.forEach((doc) => {
-                        attempts.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    console.log('📋 Tentativas bloqueadas carregadas:', attempts.length);
-                    renderBlockedAttempts(attempts);
                 } catch (error) {
                     console.error('❌ Erro ao carregar tentativas bloqueadas:', error);
                     console.error('❌ Detalhes do erro:', error.message);
