@@ -995,6 +995,8 @@
 
             // Modal functions
             function showModal(message, showYesNo = false, onYes = null, isWarning = false, onClose = null, customEmoji = null) {
+                console.log('🔔 showModal chamado:', { showYesNo, hasOnYes: !!onYes, message: message.substring(0, 50) });
+                
                 // Usar innerHTML para suportar formatação HTML
                 elements.modalMessage.innerHTML = message;
                 
@@ -1009,6 +1011,7 @@
                 }
                 
                 if (showYesNo && onYes) {
+                    console.log('🔔 Modal Sim/Não criado');
                     // Modal com Sim/Não
                     elements.modalButtons.innerHTML = `
                         <button id="modal-no-btn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition">
@@ -1020,15 +1023,18 @@
                     `;
                     
                     document.getElementById('modal-yes-btn').addEventListener('click', () => {
+                        console.log('🔔 Botão SIM clicado');
                         closeModal();
                         onYes();
                     });
                     
                     document.getElementById('modal-no-btn').addEventListener('click', () => {
+                        console.log('🔔 Botão NÃO clicado');
                         closeModal();
                         if (onClose) onClose();
                     });
                 } else {
+                    console.log('🔔 Modal OK criado');
                     // Modal apenas com OK
                     elements.modalButtons.innerHTML = `
                         <button id="modal-close-btn" class="flex-1 zele-btn text-white font-bold py-3 px-6 rounded-lg">
@@ -1037,6 +1043,7 @@
                     `;
                     
                     document.getElementById('modal-close-btn').addEventListener('click', () => {
+                        console.log('🔔 Botão OK clicado');
                         closeModal();
                         if (onClose) onClose();
                     });
@@ -2396,18 +2403,40 @@
             
             // Deletar tentativa bloqueada
             async function deleteBlockedAttempt(attemptId) {
+                console.log('🗑️ deleteBlockedAttempt chamada. ID:', attemptId);
                 showModal(
                     'Tem certeza que deseja excluir esta tentativa de bloqueio?',
                     true,
                     async () => {
                         try {
+                            console.log('🔵 Confirmação recebida. Iniciando exclusão...');
+                            console.log('🔍 attemptId:', attemptId);
+                            console.log('🔍 firebaseDb existe?', !!window.firebaseDb);
+                            console.log('🔍 firestoreMethods existe?', !!window.firestoreMethods);
+                            
                             const { doc, deleteDoc } = window.firestoreMethods;
-                            await deleteDoc(doc(window.firebaseDb, 'blockedAttempts', attemptId));
+                            
+                            if (!doc || !deleteDoc) {
+                                throw new Error('Métodos Firestore não disponíveis');
+                            }
+                            
+                            console.log('🔵 Criando referência do documento...');
+                            const docRef = doc(window.firebaseDb, 'blockedAttempts', attemptId);
+                            console.log('🔵 Referência criada:', docRef);
+                            
+                            console.log('🔵 Executando deleteDoc...');
+                            await deleteDoc(docRef);
+                            
+                            console.log('✅ Tentativa excluída com sucesso!');
                             showModal('✅ Tentativa excluída com sucesso!');
                             // A lista será atualizada automaticamente pelo listener em tempo real
                         } catch (error) {
-                            console.error('❌ Erro ao deletar tentativa:', error);
-                            showModal('❌ Erro ao excluir tentativa. Tente novamente.');
+                            console.error('❌ ERRO DETALHADO ao deletar tentativa:', error);
+                            console.error('❌ Tipo:', error.name);
+                            console.error('❌ Mensagem:', error.message);
+                            console.error('❌ Code:', error.code);
+                            console.error('❌ Stack:', error.stack);
+                            showModal(`❌ Erro ao excluir tentativa: ${error.message || error.code}`);
                         }
                     },
                     true
