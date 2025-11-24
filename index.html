@@ -929,14 +929,14 @@
             const preloadedImages = {};
             function preloadTeamImages() {
                 const imageUrls = [
-                    'https://github.com/VolunteersZele/escala/blob/main/Logo%20Welcome%20horizontal.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Welcome%20azul%20claro.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Logo%20Backstage%20horizontal.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Backstage%20azul%20claro.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Logo%20Parking%20horizontal.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Parking%20azul%20claro.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Logo%20Kids%20horizontal.png?raw=true',
-                    'https://github.com/VolunteersZele/escala/blob/main/Kids%20azul%20claro.png?raw=true'
+                    'https://github.com/escalaserver/zele/blob/main/Logo%20Welcome%20horizontal.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Welcome%20azul%20claro.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Logo%20Backstage%20horizontal.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Backstage%20azul%20claro.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Logo%20Parking%20horizontal.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Parking%20azul%20claro.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Logo%20Kids%20horizontal.png?raw=true',
+                    'https://github.com/escalaserver/zele/blob/main/Kids%20azul%20claro.png?raw=true'
                 ];
                 
                 imageUrls.forEach(url => {
@@ -1460,7 +1460,7 @@
             function updateUserUI(user) {
                 if (user) {
                     const displayName = user.displayName || 'Usuário';
-                    const defaultPhoto = 'https://github.com/VolunteersZele/escala/blob/main/Zele%20logo.png?raw=true';
+                    const defaultPhoto = 'https://github.com/escalaserver/zele/blob/main/Zele%20logo.png?raw=true';
                     elements.userName.textContent = isAdmin ? `${displayName} 👑` : displayName;
                     elements.userEmail.textContent = user.email;
                     elements.userPhoto.src = user.photoURL || defaultPhoto;
@@ -1885,9 +1885,13 @@
                     const { doc, getDoc } = window.firestoreMethods;
                     const datesDoc = await getDoc(doc(window.firebaseDb, 'config', 'availableDates'));
                     
+                    console.log('🔍 DEBUG - Documento existe?', datesDoc.exists());
+                    console.log('🔍 DEBUG - Dados do documento:', datesDoc.data());
+                    
                     if (datesDoc.exists()) {
                         availableDates = datesDoc.data().dates || [];
                         console.log('📦 Datas encontradas no Firestore:', availableDates.length);
+                        console.log('🔍 DEBUG - Primeira data (exemplo):', availableDates[0]);
                         
                         // Adicionar teamLimits padrão se não existir (retrocompatibilidade)
                         availableDates = availableDates.map(date => {
@@ -1909,11 +1913,14 @@
                         
                         // Filtrar apenas eventos futuros
                         const now = new Date();
+                        console.log('🔍 DEBUG - Data/hora atual:', now.toISOString());
                         const initialCount = availableDates.length;
                         availableDates = availableDates.filter(d => {
                             const [date, time] = d.value.split('|');
                             const eventDateTime = new Date(date + 'T' + time);
-                            return eventDateTime > now;
+                            const isFuture = eventDateTime > now;
+                            console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Futuro? ${isFuture}`);
+                            return isFuture;
                         });
                         
                         console.log(`🧹 Filtrado: ${initialCount} → ${availableDates.length} eventos futuros`);
@@ -2634,15 +2641,20 @@
                             });
                             
                             console.log('📦 Array atualizado. Total:', availableDates.length);
+                            console.log('🔍 DEBUG - Array completo:', JSON.stringify(availableDates, null, 2));
                             
                             // Salvar no Firestore com retry
+                            console.log('🔍 DEBUG - Iniciando salvamento no Firestore...');
                             await firestoreRetry(async () => {
                                 const { doc, setDoc } = window.firestoreMethods;
-                                await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), { 
+                                const dataToSave = { 
                                     dates: availableDates,
                                     lastUpdated: new Date().toISOString(),
                                     version: CONFIG.SCHEMA_VERSION
-                                });
+                                };
+                                console.log('🔍 DEBUG - Dados a salvar:', JSON.stringify(dataToSave, null, 2));
+                                await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), dataToSave);
+                                console.log('🔍 DEBUG - setDoc completado');
                             }, 'Salvar evento');
                             
                             console.log('✅ Salvo no Firestore');
