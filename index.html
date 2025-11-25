@@ -32,8 +32,9 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         
-        console.log('🔥 Firebase imports carregados - versão com orderBy, addDoc e updateDoc');
+        console.log('🔥 Firebase imports carregados - versão com orderBy, addDoc, updateDoc e Storage');
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -49,6 +50,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
         const provider = new GoogleAuthProvider();
         
         // Forçar seleção de conta ao fazer login
@@ -58,9 +60,11 @@
         
         window.firebaseAuth = auth;
         window.firebaseDb = db;
+        window.firebaseStorage = storage;
         window.firebaseProvider = provider;
         window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile };
         window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc };
+        window.firebaseStorageMethods = { ref, uploadBytes, getDownloadURL };
         
         console.log('✅ Firebase inicializado e exportado para window');
         window.firebaseReady = true;
@@ -182,8 +186,8 @@
             }
         }
         .blink-border {
-            animation: blink-border 0.5s ease-in-out 3;
-            -webkit-animation: blink-border 0.5s ease-in-out 3;
+            animation: blink-border 0.2s ease-in-out 4;
+            -webkit-animation: blink-border 0.2s ease-in-out 4;
         }
         @keyframes pulse-team {
             0%, 100% { border: 1px solid #e5e5e5; }
@@ -756,6 +760,16 @@
                     </div>
                 </button>
 
+                <button id="menu-change-photo-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left">
+                    <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-gray-800">Alterar Foto</p>
+                        <p class="text-xs text-gray-600">Escolher foto de perfil</p>
+                    </div>
+                </button>
+
                 <button id="menu-logout-btn" class="w-full flex items-center gap-3 p-4 rounded-lg hover:bg-gray-100 transition text-left">
                     <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -766,6 +780,9 @@
                     </div>
                 </button>
             </div>
+
+            <!-- Input oculto para upload de foto -->
+            <input type="file" id="photo-upload-input" accept="image/*" style="display: none;">
 
             <!-- Versão -->
             <div class="mt-8 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
@@ -1407,6 +1424,72 @@
                 document.getElementById('ios-install-modal').classList.add('hidden');
             });
 
+            // Botão de alterar foto no menu
+            document.getElementById('menu-change-photo-btn')?.addEventListener('click', () => {
+                closeMenu();
+                document.getElementById('photo-upload-input').click();
+            });
+
+            // Upload de foto de perfil
+            document.getElementById('photo-upload-input')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validar tipo de arquivo
+                if (!file.type.startsWith('image/')) {
+                    showModal('❌ Por favor, selecione uma imagem válida.', false, null, true);
+                    return;
+                }
+                
+                // Validar tamanho (máximo 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showModal('❌ A imagem deve ter no máximo 5MB.', false, null, true);
+                    return;
+                }
+                
+                try {
+                    showLoading();
+                    console.log('📸 Fazendo upload da foto...');
+                    
+                    // Upload para Firebase Storage
+                    const { ref, uploadBytes, getDownloadURL } = window.firebaseStorageMethods;
+                    const storageRef = ref(window.firebaseStorage, `profile-photos/${currentUser.uid}/${Date.now()}_${file.name}`);
+                    
+                    await uploadBytes(storageRef, file);
+                    const photoURL = await getDownloadURL(storageRef);
+                    
+                    console.log('✅ Foto enviada:', photoURL);
+                    
+                    // Atualizar perfil no Firebase Auth
+                    const { updateProfile } = window.firebaseAuthMethods;
+                    await updateProfile(currentUser, { photoURL });
+                    
+                    // Atualizar no Firestore
+                    const { doc, updateDoc } = window.firestoreMethods;
+                    await updateDoc(doc(window.firebaseDb, 'users', currentUser.uid), {
+                        photoURL: photoURL,
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    // Atualizar UI
+                    elements.userPhoto.src = photoURL;
+                    elements.menuUserPhoto.src = photoURL;
+                    
+                    hideLoading();
+                    showModal('✅ Foto de perfil atualizada com sucesso!', false, null, false);
+                    
+                    console.log('✅ Foto de perfil atualizada');
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao fazer upload da foto:', error);
+                    hideLoading();
+                    showModal(`❌ Erro ao atualizar foto: ${error.message}`, false, null, true);
+                }
+                
+                // Limpar input
+                e.target.value = '';
+            });
+
             // Seleção de time
             elements.teamBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -1496,7 +1579,7 @@
             // Função para animar botões dos times em sequência (horário)
             function animateTeamButtonsSequence() {
                 const teamOrder = ['welcome', 'backstage', 'parking', 'kids'];
-                const delay = 500; // tempo total da animação (1 piscada x 0.5s = 0.5s)
+                const delay = 200; // tempo total da animação (1 piscada x 0.2s = 0.2s)
                 
                 teamOrder.forEach((teamName, index) => {
                     setTimeout(() => {
@@ -1505,7 +1588,7 @@
                             btn.classList.add('pulse-team');
                             setTimeout(() => {
                                 btn.classList.remove('pulse-team');
-                            }, 500); // 1 piscada x 0.5s = 0.5s
+                            }, 200); // 1 piscada x 0.2s = 0.2s
                         }
                     }, index * delay);
                 });
@@ -2755,13 +2838,18 @@
                     // Encontrar o índice real no array original
                     const realIndex = availableDates.findIndex(d => d.value === date.value);
                     return `
-                        <div class="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
-                            <span class="text-sm flex-1">${date.text}</span>
-                            <div class="flex gap-2">
-                                <button class="admin-edit-date text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline" data-index="${realIndex}">
+                        <div class="bg-white p-3 rounded border border-gray-200 space-y-2">
+                            <!-- Linha 1: Descrição do evento -->
+                            <div class="text-sm font-medium text-gray-800">
+                                ${date.text}
+                            </div>
+                            
+                            <!-- Linha 2: Botões de ação -->
+                            <div class="flex gap-2 pt-1">
+                                <button class="admin-edit-date flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded text-sm transition border border-blue-200" data-index="${realIndex}">
                                     ✏️ Editar
                                 </button>
-                                <button class="admin-delete-date text-red-600 hover:text-red-800 text-sm font-semibold hover:underline" data-index="${realIndex}">
+                                <button class="admin-delete-date flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded text-sm transition border border-red-200" data-index="${realIndex}">
                                     🗑️ Remover
                                 </button>
                             </div>
@@ -3560,7 +3648,7 @@
                 
                 const labels = sorted.map(item => {
                     const date = item[0].split(' - ')[0];
-                    const dateObj = new Date(date);
+                    const dateObj = new Date(date + 'T00:00:00');
                     return `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
                 });
                 const data = sorted.map(item => item[1]);
@@ -3642,7 +3730,7 @@
                         const emptyCount = Object.values(teams).filter(count => count === 0).length;
                         
                         // Formatação da label
-                        const dateObj = new Date(dateStr);
+                        const dateObj = new Date(dateStr + 'T00:00:00');
                         const day = dateObj.getDate().toString().padStart(2, '0');
                         const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
                         labels.push(`${day}/${month}`);
