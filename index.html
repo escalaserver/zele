@@ -2354,7 +2354,7 @@
                     
                     if (userDoc.exists() && userDoc.data().blocked === true) {
                         console.log('🚫 Usuário bloqueado. Fazendo logout...');
-                        showModal('Seu acesso foi bloqueado. Entre em contato com o administrador.', false, null, false, async () => {
+                        showModal('Seu acesso está temporariamente bloqueado neste aplicativo. Por favor, fale com o Líder do time que está servindo para maiores informações.', false, null, false, async () => {
                             await window.firebaseAuthMethods.signOut(window.firebaseAuth);
                             window.location.reload();
                         }, '🚫');
