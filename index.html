@@ -31,7 +31,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         
         console.log('🔥 Firebase imports carregados - versão com orderBy, addDoc, updateDoc e Storage');
@@ -63,7 +63,7 @@
         window.firebaseStorage = storage;
         window.firebaseProvider = provider;
         window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile };
-        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc };
+        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit };
         window.firebaseStorageMethods = { ref, uploadBytes, getDownloadURL };
         
         console.log('✅ Firebase inicializado e exportado para window');
@@ -596,6 +596,65 @@
                 
                 <!-- Lista de Usuários -->
                 <div id="users-list" class="space-y-3">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #377db8;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Página de Logs de Auditoria -->
+    <div id="audit-logs-page" class="hidden">
+        <!-- Header -->
+        <header class="zele-primary text-white" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button id="back-from-audit-logs" class="zele-btn p-2 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <h1 class="text-2xl font-bold">Logs de Auditoria</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="container mx-auto px-4 py-8 max-w-6xl">
+            <div class="card-float rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold" style="color: #151b29;">📋 Histórico de Ações</h2>
+                    <button id="refresh-audit-logs" class="zele-btn text-white font-bold py-2 px-4 rounded-lg text-sm">
+                        🔄 Atualizar
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-6">Registro completo de aprovações, negações, exclusões e mudanças de time.</p>
+                
+                <!-- Filtros -->
+                <div class="flex flex-wrap gap-3 mb-6 pb-6 border-b border-gray-200">
+                    <select id="audit-log-filter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="all">Todas as ações</option>
+                        <option value="APPROVE_PENDING">✅ Aprovações</option>
+                        <option value="DENY_PENDING">❌ Negações</option>
+                        <option value="DELETE_ESCALA">🗑️ Exclusões de Escalas</option>
+                        <option value="DELETE_BLOCKED_ATTEMPT">🔓 Remoções de Bloqueios</option>
+                    </select>
+                    
+                    <select id="audit-log-period" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="30" selected>Últimos 30 dias</option>
+                        <option value="90">Últimos 3 meses</option>
+                        <option value="all">Todo o período</option>
+                    </select>
+                </div>
+                
+                <!-- Lista de Logs -->
+                <div id="audit-logs-list" class="space-y-3">
                     <div class="flex items-center justify-center py-8">
                         <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #377db8;"></div>
                     </div>
@@ -1157,17 +1216,35 @@
                     </div>
                 </div>
 
-                <!-- Grupo 3: Super Admin (Gerenciar Acesso) -->
-                <div id="superadmin-menu-group" class="border border-gray-200 rounded-lg overflow-hidden" style="display: none;">
-                    <button id="menu-manage-admins-btn" class="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 transition text-left">
-                        <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                <!-- Grupo 3: Menu Administrativo -->
+                <div id="admin-menu-group" class="border border-gray-200 rounded-lg overflow-hidden" style="display: none;">
+                    <button id="toggle-admin-menu" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-800">🔧 Menu Administrativo</span>
+                        <svg class="w-5 h-5 transform transition-transform" id="admin-menu-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
-                        <div>
-                            <p class="font-semibold text-gray-800">Gerenciar Acesso</p>
-                            <p class="text-xs text-gray-600">Gerenciar usuários e permissões</p>
-                        </div>
                     </button>
+                    <div id="admin-menu-items" class="hidden bg-white">
+                        <button id="menu-manage-admins-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left border-b border-gray-100">
+                            <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Gerenciar Acesso</p>
+                                <p class="text-xs text-gray-600">Gerenciar usuários e permissões</p>
+                            </div>
+                        </button>
+                        
+                        <button id="menu-audit-logs-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left">
+                            <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Logs de Auditoria</p>
+                                <p class="text-xs text-gray-600">Histórico de ações</p>
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Botão Sair (fora dos grupos) -->
@@ -1769,6 +1846,42 @@
                 });
             }
 
+            // Navegação para página de Logs de Auditoria
+            const menuAuditLogsBtn = document.getElementById('menu-audit-logs-btn');
+            const backFromAuditLogsBtn = document.getElementById('back-from-audit-logs');
+            const auditLogsPage = document.getElementById('audit-logs-page');
+            const refreshAuditLogsBtn = document.getElementById('refresh-audit-logs');
+            const auditLogFilter = document.getElementById('audit-log-filter');
+            const auditLogPeriod = document.getElementById('audit-log-period');
+
+            if (menuAuditLogsBtn) {
+                menuAuditLogsBtn.addEventListener('click', () => {
+                    closeMenu();
+                    appContainer.classList.add('hidden');
+                    auditLogsPage.classList.remove('hidden');
+                    loadAuditLogs();
+                });
+            }
+
+            if (backFromAuditLogsBtn) {
+                backFromAuditLogsBtn.addEventListener('click', () => {
+                    auditLogsPage.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                });
+            }
+
+            if (refreshAuditLogsBtn) {
+                refreshAuditLogsBtn.addEventListener('click', () => loadAuditLogs());
+            }
+
+            if (auditLogFilter) {
+                auditLogFilter.addEventListener('change', () => loadAuditLogs());
+            }
+
+            if (auditLogPeriod) {
+                auditLogPeriod.addEventListener('change', () => loadAuditLogs());
+            }
+
             // Navegação para página de Dashboard
             const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
             const backFromDashboardBtn = document.getElementById('back-from-dashboard');
@@ -1850,14 +1963,25 @@
             const leadershipMenuItems = document.getElementById('leadership-menu-items');
             const leadershipMenuArrow = document.getElementById('leadership-menu-arrow');
 
+            // Grupo 3: Menu Administrativo
+            const toggleAdminMenu = document.getElementById('toggle-admin-menu');
+            const adminMenuItems = document.getElementById('admin-menu-items');
+            const adminMenuArrow = document.getElementById('admin-menu-arrow');
+
             if (toggleMyMenu) {
                 toggleMyMenu.addEventListener('click', () => {
                     const isExpanding = myMenuItems.classList.contains('hidden');
                     
-                    // Se estiver expandindo o grupo 1, retrair o grupo 2
-                    if (isExpanding && leadershipMenuItems) {
-                        leadershipMenuItems.classList.add('hidden');
-                        leadershipMenuArrow.classList.remove('rotate-90');
+                    // Se estiver expandindo o grupo 1, retrair os outros
+                    if (isExpanding) {
+                        if (leadershipMenuItems) {
+                            leadershipMenuItems.classList.add('hidden');
+                            leadershipMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (adminMenuItems) {
+                            adminMenuItems.classList.add('hidden');
+                            adminMenuArrow.classList.remove('rotate-90');
+                        }
                     }
                     
                     myMenuItems.classList.toggle('hidden');
@@ -1869,14 +1993,41 @@
                 toggleLeadershipMenu.addEventListener('click', () => {
                     const isExpanding = leadershipMenuItems.classList.contains('hidden');
                     
-                    // Se estiver expandindo o grupo 2, retrair o grupo 1
-                    if (isExpanding && myMenuItems) {
-                        myMenuItems.classList.add('hidden');
-                        myMenuArrow.classList.remove('rotate-90');
+                    // Se estiver expandindo o grupo 2, retrair os outros
+                    if (isExpanding) {
+                        if (myMenuItems) {
+                            myMenuItems.classList.add('hidden');
+                            myMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (adminMenuItems) {
+                            adminMenuItems.classList.add('hidden');
+                            adminMenuArrow.classList.remove('rotate-90');
+                        }
                     }
                     
                     leadershipMenuItems.classList.toggle('hidden');
                     leadershipMenuArrow.classList.toggle('rotate-90');
+                });
+            }
+
+            if (toggleAdminMenu) {
+                toggleAdminMenu.addEventListener('click', () => {
+                    const isExpanding = adminMenuItems.classList.contains('hidden');
+                    
+                    // Se estiver expandindo o grupo 3, retrair os outros
+                    if (isExpanding) {
+                        if (myMenuItems) {
+                            myMenuItems.classList.add('hidden');
+                            myMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (leadershipMenuItems) {
+                            leadershipMenuItems.classList.add('hidden');
+                            leadershipMenuArrow.classList.remove('rotate-90');
+                        }
+                    }
+                    
+                    adminMenuItems.classList.toggle('hidden');
+                    adminMenuArrow.classList.toggle('rotate-90');
                 });
             }
 
@@ -2412,16 +2563,22 @@
                         }
                         isAdmin = true;
                         isSuperAdmin = true;
-                        // Mostrar grupo de liderança e super admin
-                        document.getElementById('leadership-menu-group').style.display = 'block';
-                        document.getElementById('superadmin-menu-group').style.display = 'block';
-                        // Itens individuais dentro dos grupos
-                        document.getElementById('menu-admin-btn').style.display = 'block';
-                        document.getElementById('menu-manage-admins-btn').style.display = 'block';
-                        document.getElementById('menu-dashboard-btn').style.display = 'block';
-                        document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
-                        document.getElementById('menu-pending-escalas-btn').style.display = 'block';
-                        document.getElementById('menu-checkin-btn').style.display = 'block';
+                        // Mostrar grupo de liderança e menu administrativo
+                        const leadershipGroup = document.getElementById('leadership-menu-group');
+                        const adminGroup = document.getElementById('admin-menu-group');
+                        if (leadershipGroup) leadershipGroup.style.display = 'block';
+                        if (adminGroup) adminGroup.style.display = 'block';
+                        // Itens individuais dentro do grupo de liderança
+                        const menuAdminBtn = document.getElementById('menu-admin-btn');
+                        const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                        const menuBlockedBtn = document.getElementById('menu-blocked-attempts-btn');
+                        const menuPendingBtn = document.getElementById('menu-pending-escalas-btn');
+                        const menuCheckinBtn = document.getElementById('menu-checkin-btn');
+                        if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                        if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
+                        if (menuBlockedBtn) menuBlockedBtn.style.display = 'block';
+                        if (menuPendingBtn) menuPendingBtn.style.display = 'block';
+                        if (menuCheckinBtn) menuCheckinBtn.style.display = 'block';
                         updateBlockedAttemptsBadge(); // Atualizar badge
                         updatePendingEscalasBadge(); // Atualizar badge
                         console.log('✅ Usuário É SUPER ADMINISTRADOR');
@@ -2436,16 +2593,22 @@
                         if (data.role === 'superadmin') {
                             isAdmin = true;
                             isSuperAdmin = true;
-                            // Mostrar grupo de liderança e super admin
-                            document.getElementById('leadership-menu-group').style.display = 'block';
-                            document.getElementById('superadmin-menu-group').style.display = 'block';
-                            // Itens individuais dentro dos grupos
-                            document.getElementById('menu-admin-btn').style.display = 'block';
-                            document.getElementById('menu-manage-admins-btn').style.display = 'block';
-                            document.getElementById('menu-dashboard-btn').style.display = 'block';
-                            document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
-                            document.getElementById('menu-pending-escalas-btn').style.display = 'block';
-                            document.getElementById('menu-checkin-btn').style.display = 'block';
+                            // Mostrar grupo de liderança e menu administrativo
+                            const leadershipGroup = document.getElementById('leadership-menu-group');
+                            const adminGroup = document.getElementById('admin-menu-group');
+                            if (leadershipGroup) leadershipGroup.style.display = 'block';
+                            if (adminGroup) adminGroup.style.display = 'block';
+                            // Itens individuais dentro do grupo de liderança
+                            const menuAdminBtn = document.getElementById('menu-admin-btn');
+                            const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                            const menuBlockedBtn = document.getElementById('menu-blocked-attempts-btn');
+                            const menuPendingBtn = document.getElementById('menu-pending-escalas-btn');
+                            const menuCheckinBtn = document.getElementById('menu-checkin-btn');
+                            if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                            if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
+                            if (menuBlockedBtn) menuBlockedBtn.style.display = 'block';
+                            if (menuPendingBtn) menuPendingBtn.style.display = 'block';
+                            if (menuCheckinBtn) menuCheckinBtn.style.display = 'block';
                             updateBlockedAttemptsBadge(); // Atualizar badge
                             updatePendingEscalasBadge(); // Atualizar badge
                             console.log('✅ Usuário É SUPER ADMINISTRADOR');
@@ -2454,12 +2617,15 @@
                             isAdmin = true;
                             isSuperAdmin = false;
                             // Mostrar apenas grupo de liderança
-                            document.getElementById('leadership-menu-group').style.display = 'block';
-                            document.getElementById('superadmin-menu-group').style.display = 'none';
+                            const leadershipGroup = document.getElementById('leadership-menu-group');
+                            const adminGroup = document.getElementById('admin-menu-group');
+                            if (leadershipGroup) leadershipGroup.style.display = 'block';
+                            if (adminGroup) adminGroup.style.display = 'none';
                             // Itens individuais dentro do grupo de liderança
-                            document.getElementById('menu-admin-btn').style.display = 'block';
-                            document.getElementById('menu-manage-admins-btn').style.display = 'none'; // Admin não gerencia usuários
-                            document.getElementById('menu-dashboard-btn').style.display = 'block';
+                            const menuAdminBtn = document.getElementById('menu-admin-btn');
+                            const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                            if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                            if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
                             document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
                             document.getElementById('menu-pending-escalas-btn').style.display = 'block';
                             document.getElementById('menu-checkin-btn').style.display = 'block';
@@ -2477,12 +2643,15 @@
                     isAdmin = false;
                     isSuperAdmin = false;
                     // Ocultar grupos de admin
-                    document.getElementById('leadership-menu-group').style.display = 'none';
-                    document.getElementById('superadmin-menu-group').style.display = 'none';
-                    // Ocultar itens individuais também
-                    document.getElementById('menu-admin-btn').style.display = 'none';
-                    document.getElementById('menu-manage-admins-btn').style.display = 'none';
-                    document.getElementById('menu-dashboard-btn').style.display = 'none';
+                    const leadershipGroup = document.getElementById('leadership-menu-group');
+                    const adminGroup = document.getElementById('admin-menu-group');
+                    if (leadershipGroup) leadershipGroup.style.display = 'none';
+                    if (adminGroup) adminGroup.style.display = 'none';
+                    // Ocultar itens individuais do grupo de liderança
+                    const menuAdminBtn = document.getElementById('menu-admin-btn');
+                    const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                    if (menuAdminBtn) menuAdminBtn.style.display = 'none';
+                    if (menuDashboardBtn) menuDashboardBtn.style.display = 'none';
                     document.getElementById('menu-blocked-attempts-btn').style.display = 'none';
                     document.getElementById('menu-pending-escalas-btn').style.display = 'none';
                     document.getElementById('menu-checkin-btn').style.display = 'none';
@@ -2658,18 +2827,28 @@
                     }
 
                     // Verificar se falta menos de 24h para o evento OU se é time KIDS
+                    // Permitir inscrição até 1h APÓS o início do evento (para última hora)
                     const eventDateTime = new Date(`${date}T${time}`);
+                    const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
                     const now = new Date();
                     const hoursUntilEvent = (eventDateTime - now) / (1000 * 60 * 60);
+                    const hoursUntilEventEnd = (eventEndTime - now) / (1000 * 60 * 60);
                     
-                    console.log('⏰ Verificação 24h:');
+                    console.log('⏰ Verificação 24h (com janela de 1h após início):');
                     console.log('  Data/Hora evento:', eventDateTime);
+                    console.log('  Data/Hora fim (evento + 1h):', eventEndTime);
                     console.log('  Data/Hora atual:', now);
                     console.log('  Horas até evento:', hoursUntilEvent);
+                    console.log('  Horas até fim da janela:', hoursUntilEventEnd);
                     console.log('  Time selecionado:', team);
                     
-                    // Kids sempre vai para pendente, independente do horário
-                    const isPending = (hoursUntilEvent < 24 && hoursUntilEvent > 0) || team === 'kids';
+                    // Determinar se é pending
+                    // - Se falta < 24h E evento ainda não começou → PENDING
+                    // - Se evento já começou E está dentro da janela de 1h → CONFIRMADO (entrada rápida)
+                    // - Kids sempre vai para PENDING
+                    const isDuringQuickEntryWindow = hoursUntilEvent < 0 && hoursUntilEventEnd > 0; // Evento iniciado, dentro de 1h
+                    const isPending = ((hoursUntilEvent < 24 && hoursUntilEvent > 0) || team === 'kids') && !isDuringQuickEntryWindow;
+                    console.log('  Está na janela de entrada rápida (1h após início)?', isDuringQuickEntryWindow);
                     console.log('  É pendente (<24h ou Kids)?', isPending);
                     
                     // Verificar limite de voluntários no time para esta data/hora
@@ -2969,12 +3148,13 @@
                         allEscalas.push({ id: doc.id, ...doc.data() });
                     });
 
-                    // Filtrar apenas eventos futuros (baseado em data+hora completa)
+                    // Filtrar eventos visíveis (até 1h após início)
                     const now = new Date();
                     
                     const escalas = allEscalas.filter(escala => {
                         const eventDateTime = new Date(escala.date + 'T' + escala.time);
-                        return eventDateTime > now; // Mostra apenas eventos futuros
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        return eventEndTime > now; // Mostra até 1h após início
                     });
 
                     // Ordenar por data e horário (ordem crescente)
@@ -3154,16 +3334,17 @@
                             return date;
                         });
                         
-                        // Filtrar apenas eventos futuros
+                        // Filtrar apenas eventos futuros (até 1h após o início)
                         const now = new Date();
                         console.log('🔍 DEBUG - Data/hora atual:', now.toISOString());
                         const initialCount = availableDates.length;
                         availableDates = availableDates.filter(d => {
                             const [date, time] = d.value.split('|');
                             const eventDateTime = new Date(date + 'T' + time);
-                            const isFuture = eventDateTime > now;
-                            console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Futuro? ${isFuture}`);
-                            return isFuture;
+                            const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                            const isVisible = eventEndTime > now; // Visível até 1h após início
+                            console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Fim janela: ${eventEndTime.toISOString()} → Visível? ${isVisible}`);
+                            return isVisible;
                         });
                         
                         console.log(`🧹 Filtrado: ${initialCount} → ${availableDates.length} eventos futuros`);
@@ -3213,12 +3394,13 @@
                 defaultOption.textContent = 'Escolha uma data...';
                 select.appendChild(defaultOption);
 
-                // Filtrar apenas eventos futuros e ordenar por data
+                // Filtrar eventos visíveis (até 1h após o início) e ordenar por data
                 const sortedDates = [...availableDates]
                     .filter(option => {
                         const [date, time] = option.value.split('|');
                         const eventDateTime = new Date(date + 'T' + time);
-                        return eventDateTime > now;
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        return eventEndTime > now; // Visível até 1h após início
                     })
                     .sort((a, b) => {
                         const dateA = a.value.split('|')[0];
@@ -3404,15 +3586,16 @@
                         grouped[key][escala.team].push(escala);
                     });
 
-                    // Filtrar eventos passados ANTES de armazenar (baseado na data+hora completa)
+                    // Filtrar eventos visíveis (até 1h após início) ANTES de armazenar
                     const now = new Date();
                     const filteredGrouped = {};
                     
                     Object.keys(grouped).forEach(key => {
                         const data = grouped[key];
                         const eventDateTime = new Date(data.date + 'T' + data.time);
-                        // Só incluir eventos que ainda não aconteceram (data+hora futura)
-                        if (eventDateTime > now) {
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        // Incluir eventos até 1h após o início
+                        if (eventEndTime > now) {
                             filteredGrouped[key] = data;
                         }
                     });
@@ -3837,9 +4020,9 @@
                             console.log('🔍 firebaseDb existe?', !!window.firebaseDb);
                             console.log('🔍 firestoreMethods existe?', !!window.firestoreMethods);
                             
-                            const { doc, deleteDoc } = window.firestoreMethods;
+                            const { doc, deleteDoc, getDoc } = window.firestoreMethods;
                             
-                            if (!doc || !deleteDoc) {
+                            if (!doc || !deleteDoc || !getDoc) {
                                 throw new Error('Métodos Firestore não disponíveis');
                             }
                             
@@ -3847,8 +4030,31 @@
                             const docRef = doc(window.firebaseDb, 'blockedAttempts', attemptId);
                             console.log('🔵 Referência criada:', docRef);
                             
+                            // Buscar dados da tentativa antes de deletar (para o log)
+                            console.log('🔵 Buscando dados da tentativa bloqueada...');
+                            const attemptDoc = await getDoc(docRef);
+                            
+                            if (!attemptDoc.exists()) {
+                                throw new Error('Tentativa bloqueada não encontrada');
+                            }
+                            
+                            const attemptData = attemptDoc.data();
+                            console.log('🔵 Dados da tentativa:', attemptData);
+                            
                             console.log('🔵 Executando deleteDoc...');
                             await deleteDoc(docRef);
+                            
+                            // Registrar log de auditoria
+                            await logAudit('DELETE_BLOCKED_ATTEMPT', {
+                                attemptId: attemptId,
+                                userName: attemptData.userName || attemptData.userEmail,
+                                userId: attemptData.userId,
+                                date: attemptData.date,
+                                time: attemptData.time,
+                                eventName: attemptData.eventName,
+                                team: attemptData.team,
+                                reason: attemptData.reason || 'Não especificado'
+                            });
                             
                             console.log('✅ Tentativa excluída com sucesso!');
                             showModal('✅ Tentativa excluída com sucesso!');
@@ -4113,6 +4319,19 @@
                     // Atualizar escala
                     await updateDoc(escalaRef, updateData);
                     
+                    // Registrar log de auditoria
+                    await logAudit('APPROVE_PENDING', {
+                        escalaId: escalaId,
+                        volunteerName: escalaData.userName || escalaData.userEmail,
+                        volunteerId: escalaData.userId,
+                        date: escalaData.date,
+                        time: escalaData.time,
+                        eventName: escalaData.eventName,
+                        requestedTeam: requestedTeam,
+                        approvedTeam: selectedTeam,
+                        teamChanged: teamChanged
+                    });
+                    
                     console.log('✅ Escala aprovada com sucesso!');
                     showModal(`✅ Escala aprovada! ${teamChanged ? 'Time ajustado para melhor organização.' : ''}`);
                     
@@ -4125,6 +4344,203 @@
                 }
             }
             
+            // Registrar log de auditoria
+            async function logAudit(action, details) {
+                try {
+                    console.log('🔍 DEBUG - Tentando criar log de auditoria...');
+                    console.log('🔍 DEBUG - Action:', action);
+                    console.log('🔍 DEBUG - Details antes de limpar:', details);
+                    console.log('🔍 DEBUG - currentUser:', currentUser);
+                    
+                    const { collection, addDoc } = window.firestoreMethods;
+                    
+                    // Limpar campos undefined do details
+                    const cleanedDetails = {};
+                    for (const key in details) {
+                        if (details[key] !== undefined && details[key] !== null && details[key] !== '') {
+                            cleanedDetails[key] = details[key];
+                        }
+                    }
+                    
+                    console.log('🔍 DEBUG - Details após limpar:', cleanedDetails);
+                    
+                    const logData = {
+                        action: action,
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email,
+                        userName: currentUser.displayName || currentUser.email,
+                        timestamp: new Date().toISOString(),
+                        details: cleanedDetails
+                    };
+                    
+                    console.log('🔍 DEBUG - Log data a ser salvo:', logData);
+                    const docRef = await addDoc(collection(window.firebaseDb, 'audit_logs'), logData);
+                    console.log('✅ Log de auditoria registrado com ID:', docRef.id);
+                    console.log('📋 Log de auditoria registrado:', action);
+                } catch (error) {
+                    console.error('❌ Erro ao registrar log:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                }
+            }
+
+            // Carregar logs de auditoria (apenas superadmin)
+            async function loadAuditLogs() {
+                if (!isSuperAdmin) {
+                    document.getElementById('audit-logs-list').innerHTML = 
+                        '<p class="text-center text-red-500 py-8">⚠️ Acesso negado. Apenas Super Administradores podem visualizar logs.</p>';
+                    return;
+                }
+                
+                try {
+                    console.log('🔍 DEBUG - Carregando logs de auditoria...');
+                    console.log('🔍 DEBUG - isSuperAdmin:', isSuperAdmin);
+                    
+                    const { collection, getDocs, query, orderBy: orderByField, where, limit } = window.firestoreMethods;
+                    const logsList = document.getElementById('audit-logs-list');
+                    const filterValue = document.getElementById('audit-log-filter').value;
+                    const periodValue = document.getElementById('audit-log-period').value;
+                    
+                    console.log('🔍 DEBUG - Filtro:', filterValue, 'Período:', periodValue);
+                    
+                    logsList.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 mx-auto"></div><p class="text-gray-600 mt-4">Carregando logs...</p></div>';
+                    
+                    const logsRef = collection(window.firebaseDb, 'audit_logs');
+                    let q = query(logsRef, orderByField('timestamp', 'desc'), limit(100));
+                    
+                    // Aplicar filtro de ação
+                    if (filterValue !== 'all') {
+                        console.log('🔍 DEBUG - Aplicando filtro de ação:', filterValue);
+                        q = query(logsRef, where('action', '==', filterValue), orderByField('timestamp', 'desc'), limit(100));
+                    }
+                    
+                    console.log('🔍 DEBUG - Executando query...');
+                    const logsSnapshot = await getDocs(q);
+                    console.log('🔍 DEBUG - Logs encontrados:', logsSnapshot.size);
+                    
+                    if (logsSnapshot.empty) {
+                        logsList.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum log encontrado.</p>';
+                        return;
+                    }
+                    
+                    const logs = [];
+                    const now = new Date();
+                    const periodDays = periodValue === 'all' ? null : parseInt(periodValue);
+                    
+                    logsSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        console.log('🔍 DEBUG - Log doc:', doc.id, data);
+                        const logDate = new Date(data.timestamp);
+                        
+                        // Filtrar por período
+                        if (periodDays) {
+                            const diffDays = (now - logDate) / (1000 * 60 * 60 * 24);
+                            if (diffDays > periodDays) {
+                                console.log('🔍 DEBUG - Log ignorado (fora do período):', doc.id);
+                                return;
+                            }
+                        }
+                        
+                        logs.push({ id: doc.id, ...data });
+                    });
+                    
+                    if (logs.length === 0) {
+                        logsList.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum log encontrado no período selecionado.</p>';
+                        return;
+                    }
+                    
+                    // Renderizar logs
+                    const actionIcons = {
+                        'APPROVE_PENDING': '✅',
+                        'DENY_PENDING': '❌',
+                        'DELETE_ESCALA': '🗑️',
+                        'DELETE_BLOCKED_ATTEMPT': '🔓'
+                    };
+                    
+                    const actionLabels = {
+                        'APPROVE_PENDING': 'Aprovação',
+                        'DENY_PENDING': 'Negação',
+                        'DELETE_ESCALA': 'Exclusão',
+                        'DELETE_BLOCKED_ATTEMPT': 'Remoção de Bloqueio'
+                    };
+                    
+                    const teamNames = {
+                        welcome: 'Welcome',
+                        backstage: 'Backstage',
+                        parking: 'Parking',
+                        kids: 'Kids'
+                    };
+                    
+                    logsList.innerHTML = logs.map(log => {
+                        const logDate = new Date(log.timestamp);
+                        const formattedDate = logDate.toLocaleDateString('pt-BR', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        const icon = actionIcons[log.action] || '📋';
+                        const label = actionLabels[log.action] || log.action;
+                        
+                        let detailsHtml = '';
+                        if (log.action === 'APPROVE_PENDING') {
+                            const teamChanged = log.details.teamChanged ? 
+                                `<span class="text-orange-600 font-semibold">mudou ${teamNames[log.details.requestedTeam]} → ${teamNames[log.details.approvedTeam]}</span>` : 
+                                `manteve ${teamNames[log.details.approvedTeam]}`;
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamChanged}</p>
+                            `;
+                        } else if (log.action === 'DENY_PENDING') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time solicitado:</strong> ${teamNames[log.details.requestedTeam]}</p>
+                            `;
+                        } else if (log.action === 'DELETE_ESCALA') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamNames[log.details.team]}</p>
+                                <p class="text-sm"><strong>Status:</strong> ${log.details.status}</p>
+                            `;
+                        } else if (log.action === 'DELETE_BLOCKED_ATTEMPT') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Usuário:</strong> ${log.details.userName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamNames[log.details.team]}</p>
+                                <p class="text-sm"><strong>Motivo do bloqueio:</strong> ${log.details.reason}</p>
+                            `;
+                        }
+                        
+                        return `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-2xl">${icon}</span>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="font-bold text-gray-800">${label}</h3>
+                                            <span class="text-xs text-gray-500">${formattedDate}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2"><strong>Por:</strong> ${log.userName} (${log.userEmail})</p>
+                                        <div class="bg-gray-50 rounded p-2 text-gray-700">
+                                            ${detailsHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar logs:', error);
+                    document.getElementById('audit-logs-list').innerHTML = 
+                        `<p class="text-center text-red-500 py-8">❌ Erro ao carregar logs: ${error.message}</p>`;
+                }
+            }
+
             // Negar escala pendente
             async function denyPendingEscala(escalaId) {
                 showModal(
@@ -4132,15 +4548,30 @@
                     true,
                     async () => {
                         try {
-                            const { doc, updateDoc } = window.firestoreMethods;
+                            const { doc, updateDoc, getDoc } = window.firestoreMethods;
+                            
+                            // Buscar dados da escala
+                            const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
+                            const escalaDoc = await getDoc(escalaRef);
+                            const escalaData = escalaDoc.exists() ? escalaDoc.data() : {};
                             
                             // Atualizar status para denied
-                            const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
                             await updateDoc(escalaRef, {
                                 status: 'denied',
                                 deniedAt: new Date().toISOString(),
                                 deniedBy: currentUser.uid,
                                 deniedReason: 'Escala não aprovada pelo administrador'
+                            });
+                            
+                            // Registrar log de auditoria
+                            await logAudit('DENY_PENDING', {
+                                escalaId: escalaId,
+                                volunteerName: escalaData.userName || escalaData.userEmail,
+                                volunteerId: escalaData.userId,
+                                date: escalaData.date,
+                                time: escalaData.time,
+                                eventName: escalaData.eventName,
+                                requestedTeam: escalaData.team
                             });
                             
                             console.log('✅ Escala negada com sucesso!');
@@ -4184,8 +4615,26 @@
             // Deletar escala
             async function deleteEscala(escalaId) {
                 try {
-                    const { doc, deleteDoc } = window.firestoreMethods;
-                    await deleteDoc(doc(window.firebaseDb, 'escalas', escalaId));
+                    const { doc, deleteDoc, getDoc } = window.firestoreMethods;
+                    
+                    // Buscar dados da escala antes de deletar
+                    const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
+                    const escalaDoc = await getDoc(escalaRef);
+                    const escalaData = escalaDoc.exists() ? escalaDoc.data() : {};
+                    
+                    await deleteDoc(escalaRef);
+                    
+                    // Registrar log de auditoria
+                    await logAudit('DELETE_ESCALA', {
+                        escalaId: escalaId,
+                        volunteerName: escalaData.userName || escalaData.userEmail,
+                        volunteerId: escalaData.userId,
+                        date: escalaData.date,
+                        time: escalaData.time,
+                        eventName: escalaData.eventName,
+                        team: escalaData.team,
+                        status: escalaData.status
+                    });
                     
                     console.log('✅ Escala deletada com sucesso!');
                     showModal('Escala removida com sucesso!');
@@ -4278,11 +4727,11 @@
                 } else {
                     const now = new Date();
                     const eventDateTime = new Date(dateInput.value + 'T' + (document.getElementById('admin-new-time').value || '00:00'));
-                    const oneHourFromNow = new Date(now.getTime() + (60 * 60 * 1000));
                     
-                    if (eventDateTime < oneHourFromNow) {
+                    // Permitir qualquer data/hora futura, bloqueando apenas passado
+                    if (eventDateTime < now) {
                         dateInput.classList.add('border-red-500');
-                        dateError.textContent = 'Data deve ser futura (mínimo 1 hora)';
+                        dateError.textContent = 'Data não pode ser no passado';
                         dateError.classList.remove('hidden');
                         isValid = false;
                     } else {
