@@ -5834,6 +5834,9 @@
                 // Limpar inputs
                 document.getElementById('manual-scale-volunteer-search').value = '';
                 document.getElementById('manual-scale-volunteer-search').focus();
+                
+                // Recarregar lista de voluntários
+                loadVolunteersForManualScale();
             }
 
             // Carregar voluntários para escala manual
@@ -5873,6 +5876,8 @@
             // Exibir voluntários
             function displayVolunteersForManualScale(volunteers) {
                 const list = document.getElementById('manual-scale-volunteers-list');
+                
+                if (!list) return;
                 
                 if (volunteers.length === 0) {
                     list.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum voluntário encontrado</p>';
@@ -6139,14 +6144,20 @@
                         createdBy: currentUser.displayName
                     });
                     
-                    showModal(`✅ Escala criada com sucesso!<br><br>Voluntário: <strong>${selectedVolunteer.name}</strong><br>Evento: <strong>${selectedEvent.text}</strong><br>Time: <strong>${selectedTeam}</strong>`);
+                    showModal(
+                        `✅ Escala criada com sucesso!<br><br>Voluntário: <strong>${selectedVolunteer.name}</strong><br>Evento: <strong>${selectedEvent.text}</strong><br>Time: <strong>${selectedTeam}</strong>`,
+                        false,
+                        null,
+                        false,
+                        () => {
+                            // Callback ao fechar o modal - recarregar lista
+                            resetManualScalePanel();
+                        }
+                    );
                     
                     // Recarregar dados
                     await loadUserEscalas();
                     await loadAllEscalas();
-                    
-                    // Resetar e voltar
-                    resetManualScalePanel();
                     
                 } catch (error) {
                     console.error('❌ Erro ao salvar escala:', error);
