@@ -31,19 +31,19 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         
         console.log('🔥 Firebase imports carregados - versão com orderBy, addDoc, updateDoc e Storage');
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBGMYUmA0hJs1v2IlU-fdFDucYFp6LZaCg",
-            authDomain: "z-ele-church-escalas.firebaseapp.com",
-            projectId: "z-ele-church-escalas",
-            storageBucket: "z-ele-church-escalas.firebasestorage.app",
-            messagingSenderId: "473523773124",
-            appId: "1:473523773124:web:9c57a51236a5a8fabc3391"
+            apiKey: "AIzaSyBlMfqUkpQQrLHD13Hq3UJ43D4N1U1JviE",
+            authDomain: "zele-teste.firebaseapp.com",
+            projectId: "zele-teste",
+            storageBucket: "zele-teste.firebasestorage.app",
+            messagingSenderId: "758471959826",
+            appId: "1:758471959826:web:374288feffb10f31fc7fcb"
         };
         
         // Initialize Firebase
@@ -63,7 +63,7 @@
         window.firebaseStorage = storage;
         window.firebaseProvider = provider;
         window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile };
-        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc };
+        window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit, Timestamp };
         window.firebaseStorageMethods = { ref, uploadBytes, getDownloadURL };
         
         console.log('✅ Firebase inicializado e exportado para window');
@@ -446,13 +446,6 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-semibold mb-2" style="color: #151b29;">3º - Salve a data e time que vai servir</label>
-                    <button id="save-escala-btn" class="w-full zele-btn text-white font-bold py-3 px-6 rounded-lg">
-                        💾 Salvar Escala
-                    </button>
-                </div>
             </div>
 
             <!-- Calendário/Lista de Escalas -->
@@ -565,6 +558,15 @@
                         <!-- Lista de datas será inserida aqui -->
                     </div>
                 </div>
+
+                <!-- Backups de Escalas Deletadas -->
+                <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                    <h3 class="font-bold text-lg mb-4 text-blue-800">💾 Backups de Escalas Deletadas</h3>
+                    <p class="text-sm text-blue-700 mb-4">Quando uma data é removida, as escalas são automaticamente salvas em backup e podem ser restauradas.</p>
+                    <div id="admin-backups-list" class="space-y-2">
+                        <p class="text-gray-500 text-sm">Carregando backups...</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -604,7 +606,152 @@
         </main>
     </div>
 
+    <!-- Página de Logs de Auditoria -->
+    <div id="audit-logs-page" class="hidden">
+        <!-- Header -->
+        <header class="zele-primary text-white" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button id="back-from-audit-logs" class="zele-btn p-2 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <h1 class="text-2xl font-bold">Logs de Auditoria</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="container mx-auto px-4 py-8 max-w-6xl">
+            <div class="card-float rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold" style="color: #151b29;">📋 Histórico de Ações</h2>
+                    <button id="refresh-audit-logs" class="zele-btn text-white font-bold py-2 px-4 rounded-lg text-sm">
+                        🔄 Atualizar
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-6">Registro completo de aprovações, negações, exclusões e mudanças de time.</p>
+                
+                <!-- Filtros -->
+                <div class="flex flex-wrap gap-3 mb-6 pb-6 border-b border-gray-200">
+                    <select id="audit-log-filter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="all">Todas as ações</option>
+                        <option value="APPROVE_PENDING">✅ Aprovações</option>
+                        <option value="DENY_PENDING">❌ Negações</option>
+                        <option value="DELETE_ESCALA">🗑️ Exclusões de Escalas</option>
+                        <option value="DELETE_BLOCKED_ATTEMPT">🔓 Remoções de Bloqueios</option>
+                    </select>
+                    
+                    <select id="audit-log-period" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="30" selected>Últimos 30 dias</option>
+                        <option value="90">Últimos 3 meses</option>
+                        <option value="all">Todo o período</option>
+                    </select>
+                </div>
+                
+                <!-- Lista de Logs -->
+                <div id="audit-logs-list" class="space-y-3">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #377db8;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Página de Escalar Voluntários Manualmente (Super Admin) -->
+    <div id="manual-scale-page" class="hidden">
+        <!-- Header -->
+        <header class="zele-primary text-white" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button id="back-from-manual-scale" class="zele-btn p-2 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <img src="Volunteers logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <h1 class="text-2xl font-bold">Escalar Voluntários</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="container mx-auto px-4 py-8 max-w-4xl">
+            <!-- Seção 1: Selecionar Voluntário -->
+            <div id="manual-scale-step-1" class="card-float rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">👥 Selecione um Voluntário</h2>
+                
+                <div class="mb-4">
+                    <input 
+                        type="text" 
+                        id="manual-scale-volunteer-search" 
+                        placeholder="🔍 Procurar por nome ou email..." 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                </div>
+                
+                <div id="manual-scale-volunteers-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-8">Carregando voluntários...</p>
+                </div>
+            </div>
+
+            <!-- Seção 2: Selecionar Evento -->
+            <div id="manual-scale-step-2" class="card-float rounded-xl p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">📅 Selecione um Evento</h2>
+                
+                <div id="manual-scale-selected-volunteer" class="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-blue-500">
+                    <p class="text-sm text-gray-600">Voluntário selecionado:</p>
+                    <p id="manual-scale-volunteer-name" class="text-xl font-bold text-blue-900">-</p>
+                </div>
+                
+                <div id="manual-scale-events-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-8">Carregando eventos...</p>
+                </div>
+            </div>
+
+            <!-- Seção 3: Selecionar Time -->
+            <div id="manual-scale-step-3" class="card-float rounded-xl p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold mb-4" style="color: #151b29;">👔 Selecione um Time</h2>
+                
+                <div id="manual-scale-selected-event" class="bg-green-50 p-4 rounded-lg mb-6 border-l-4 border-green-500">
+                    <p class="text-sm text-gray-600">Evento selecionado:</p>
+                    <p id="manual-scale-event-name" class="text-xl font-bold text-green-900">-</p>
+                </div>
+                
+                <div id="manual-scale-teams-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Times serão inseridos aqui -->
+                </div>
+                
+                <div class="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+                    <button id="manual-scale-back-to-event" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition">
+                        ◀ Voltar
+                    </button>
+                    <button id="manual-scale-confirm-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition" disabled>
+                        ✅ Confirmar Escala
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botões de Navegação -->
+            <div class="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button id="manual-scale-back-to-volunteer" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition hidden">
+                    ◀ Voltar
+                </button>
+            </div>
+        </main>
+    </div>
+
     <!-- Página de Dashboard -->
+
     <div id="dashboard-page" class="hidden">
         <!-- Header -->
         <header class="zele-primary text-white" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
@@ -656,6 +803,77 @@
 
             <!-- Grid de Gráficos -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Card de Voluntários e Líderes (Estatísticas Principais) -->
+                <div class="card-float rounded-xl p-6 lg:col-span-2">
+                    <h3 class="font-bold text-lg mb-6" style="color: #151b29;">👥 Estatísticas de Voluntários</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Card: Total de Voluntários -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition-all" onclick="openTotalVolunteersModal()">
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Total de Voluntários</p>
+                                    <p class="text-3xl font-bold text-blue-600 mt-2" id="stat-total-volunteers">-</p>
+                                </div>
+                                <span class="text-4xl opacity-50">📋</span>
+                            </div>
+                        </div>
+
+                        <!-- Card: Total de Líderes de Time -->
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-l-4 border-purple-500 cursor-pointer hover:shadow-lg transition-all" onclick="openTotalLeadersModal()">
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Líderes de Time</p>
+                                    <p class="text-3xl font-bold text-purple-600 mt-2" id="stat-total-leaders">-</p>
+                                </div>
+                                <span class="text-4xl opacity-50">👑</span>
+                            </div>
+                        </div>
+
+                        <!-- Card: Voluntários Únicos (com escalas) -->
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-l-4 border-green-500 cursor-pointer hover:shadow-lg transition-all" onclick="openActiveVolunteersModal()">
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Escalados Este Mês</p>
+                                    <p class="text-3xl font-bold text-green-600 mt-2" id="stat-active-volunteers">-</p>
+                                </div>
+                                <span class="text-4xl opacity-50">✅</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 text-center">Última atualização: <span id="stat-update-time">-</span></p>
+                </div>
+
+                <!-- Card de Engajamento (Voluntários com/sem Escalas) -->
+                <div class="card-float rounded-xl p-6 lg:col-span-2">
+                    <h3 class="font-bold text-lg mb-6" style="color: #151b29;">📊 Engajamento de Voluntários</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Card: Voluntários com Escalas -->
+                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border-l-4 border-emerald-500 cursor-pointer hover:shadow-lg transition-all" onclick="openVolunteersWithEscalasModal()">
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Voluntários Ativos</p>
+                                    <p class="text-sm text-gray-500 mb-2">(Já fizeram escalas)</p>
+                                    <p class="text-3xl font-bold text-emerald-600 mt-2" id="stat-volunteers-with-escalas">-</p>
+                                </div>
+                                <span class="text-4xl opacity-50">✅</span>
+                            </div>
+                        </div>
+
+                        <!-- Card: Voluntários sem Escalas -->
+                        <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border-l-4 border-slate-500 cursor-pointer hover:shadow-lg transition-all" onclick="openVolunteersWithoutEscalasModal()">
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Voluntários Inativos</p>
+                                    <p class="text-sm text-gray-500 mb-2">(Só acessaram o app)</p>
+                                    <p class="text-3xl font-bold text-slate-600 mt-2" id="stat-volunteers-without-escalas">-</p>
+                                </div>
+                                <span class="text-4xl opacity-50">🔍</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 text-center">Mostra o histórico total de escalas</p>
+                </div>
+
                 <!-- Gráfico 1: Times com Menos de 5 Voluntários (ALERTA) -->
                 <div class="card-float rounded-xl p-6">
                     <div class="flex items-center justify-between mb-4">
@@ -895,6 +1113,126 @@
         </div>
     </div>
 
+    <!-- Modal: Total de Voluntários -->
+    <div id="stat-total-volunteers-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="stat-total-volunteers-modal-close" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-2" style="color: #151b29;">📋 Total de Voluntários</h3>
+                <p class="text-sm text-gray-600 mb-4">Todos os voluntários cadastrados no sistema</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="stat-total-volunteers-search" placeholder="Buscar voluntário..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2" id="stat-total-volunteers-list">
+                    <!-- Lista será inserida aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Total de Líderes -->
+    <div id="stat-total-leaders-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="stat-total-leaders-modal-close" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-2" style="color: #151b29;">👑 Líderes de Time</h3>
+                <p class="text-sm text-gray-600 mb-4">Usuários que lideram times</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="stat-total-leaders-search" placeholder="Buscar líder..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2" id="stat-total-leaders-list">
+                    <!-- Lista será inserida aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Voluntários com Escalas -->
+    <div id="stat-volunteers-with-escalas-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="stat-volunteers-with-escalas-modal-close" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-2" style="color: #151b29;">✅ Voluntários Ativos</h3>
+                <p class="text-sm text-gray-600 mb-4">Voluntários que já fizeram escalas no histórico</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="stat-volunteers-with-escalas-search" placeholder="Buscar voluntário..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2" id="stat-volunteers-with-escalas-list">
+                    <!-- Lista será inserida aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Voluntários sem Escalas -->
+    <div id="stat-volunteers-without-escalas-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="stat-volunteers-without-escalas-modal-close" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-2" style="color: #151b29;">🔍 Voluntários Inativos</h3>
+                <p class="text-sm text-gray-600 mb-4">Voluntários que acessaram mas nunca fizeram escalas</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="stat-volunteers-without-escalas-search" placeholder="Buscar voluntário..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2" id="stat-volunteers-without-escalas-list">
+                    <!-- Lista será inserida aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Escalados Este Mês -->
+    <div id="stat-active-volunteers-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="stat-active-volunteers-modal-close" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-2xl font-bold mb-2" style="color: #151b29;">✅ Escalados Este Mês</h3>
+                <p class="text-sm text-gray-600 mb-4">Voluntários com escalas aprovadas neste período</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="stat-active-volunteers-search" placeholder="Buscar voluntário..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2" id="stat-active-volunteers-list">
+                    <!-- Lista será inserida aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Onboarding - Primeiro Acesso -->
     <div id="onboarding-modal" class="modal-overlay" style="display: none;">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
@@ -926,6 +1264,9 @@
                     <button class="onboarding-team-btn p-4 border-2 border-gray-300 rounded-lg hover:border-purple-500 transition" data-team="comunicacao">
                         <div class="text-3xl mb-2">📢</div>
                         <div class="font-semibold text-purple-600">Comunicação</div>
+                    </button>
+                    <button class="onboarding-team-btn p-4 border-2 border-gray-300 rounded-lg hover:border-gray-400 transition" data-team="no-preference">
+                        <div class="font-semibold text-black">Sem preferência de Time</div>
                     </button>
                 </div>
             </div>
@@ -1157,17 +1498,45 @@
                     </div>
                 </div>
 
-                <!-- Grupo 3: Super Admin (Gerenciar Acesso) -->
-                <div id="superadmin-menu-group" class="border border-gray-200 rounded-lg overflow-hidden" style="display: none;">
-                    <button id="menu-manage-admins-btn" class="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 transition text-left">
-                        <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                <!-- Grupo 3: Menu Administrativo -->
+                <div id="admin-menu-group" class="border border-gray-200 rounded-lg overflow-hidden" style="display: none;">
+                    <button id="toggle-admin-menu" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-800">🔧 Menu Administrativo</span>
+                        <svg class="w-5 h-5 transform transition-transform" id="admin-menu-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
-                        <div>
-                            <p class="font-semibold text-gray-800">Gerenciar Acesso</p>
-                            <p class="text-xs text-gray-600">Gerenciar usuários e permissões</p>
-                        </div>
                     </button>
+                    <div id="admin-menu-items" class="hidden bg-white">
+                        <button id="menu-manage-admins-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left border-b border-gray-100">
+                            <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Gerenciar Acesso</p>
+                                <p class="text-xs text-gray-600">Gerenciar usuários e permissões</p>
+                            </div>
+                        </button>
+                        
+                        <button id="menu-manual-scale-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left border-b border-gray-100">
+                            <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Escalar Voluntários</p>
+                                <p class="text-xs text-gray-600">Adicionar escalas manualmente</p>
+                            </div>
+                        </button>
+                        
+                        <button id="menu-audit-logs-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left">
+                            <svg class="w-6 h-6" style="color: #151b29;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Logs de Auditoria</p>
+                                <p class="text-xs text-gray-600">Histórico de ações</p>
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Botão Sair (fora dos grupos) -->
@@ -1389,7 +1758,565 @@
             if (typeof emailjs !== 'undefined' && CONFIG.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
                 emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
                 console.log('📧 EmailJS inicializado');
-            }        
+            }
+
+        // ========================================
+        // 📊 FUNÇÕES DE ESTATÍSTICAS E MODAIS (GLOBAL)
+        // ========================================
+        
+        async function getVolunteerStats(escalas) {
+            try {
+                const { collection, getDocs, query, orderBy } = window.firestoreMethods;
+                
+                // 1. Contar total de voluntários no sistema
+                const usersRef = collection(window.firebaseDb, 'users');
+                const usersSnapshot = await getDocs(usersRef);
+                const totalVolunteers = usersSnapshot.size;
+                
+                // 2. Contar líderes de times (usuários com teamLeader array não vazio)
+                let totalLeaders = 0;
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.teamLeader && Array.isArray(data.teamLeader) && data.teamLeader.length > 0) {
+                        totalLeaders++;
+                    }
+                });
+                
+                // 3. Contar voluntários únicos com escalas aprovadas neste mês
+                const now = new Date();
+                const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                
+                // Formatar datas como strings YYYY-MM-DD para comparação
+                const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+                const lastDayStr = lastDayOfMonth.toISOString().split('T')[0];
+                
+                console.log('📅 Buscando escalas entre:', firstDayStr, 'e', lastDayStr);
+                
+                // Buscar TODAS as escalas do Firestore para calcular corretamente
+                const allEscalasForMonthRef = collection(window.firebaseDb, 'escalas');
+                const allEscalasForMonthSnapshot = await getDocs(allEscalasForMonthRef);
+                
+                console.log('📊 Total de escalas no Firestore:', allEscalasForMonthSnapshot.size);
+                
+                const escalasThisMonth = [];
+                let escalasWithoutDate = 0;
+                let escalasOutsideMonth = 0;
+                
+                allEscalasForMonthSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Verificar se tem o campo date (formato: YYYY-MM-DD)
+                    if (!data.date) {
+                        escalasWithoutDate++;
+                        return;
+                    }
+                    
+                    if (data.status === 'approved' || !data.status) {
+                        // Comparar strings de data (YYYY-MM-DD)
+                        if (data.date >= firstDayStr && data.date <= lastDayStr) {
+                            escalasThisMonth.push(data);
+                        } else {
+                            escalasOutsideMonth++;
+                        }
+                    }
+                });
+                
+                console.log('📊 Escalas encontradas neste mês:', escalasThisMonth.length);
+                console.log('⚠️ Escalas SEM campo date:', escalasWithoutDate);
+                console.log('📅 Escalas FORA do mês:', escalasOutsideMonth);
+                
+                // Debug: mostrar exemplo das primeiras 3 escalas
+                if (escalasThisMonth.length > 0) {
+                    console.log('📋 Exemplos de escalas do mês:', escalasThisMonth.slice(0, 3).map(e => ({
+                        userId: e.userId,
+                        volunteerName: e.volunteerName,
+                        date: e.date,
+                        team: e.team
+                    })));
+                }
+                
+                // Contar usuários únicos com escalas
+                const uniqueVolunteersWithEscalas = new Set(escalasThisMonth.map(e => e.userId).filter(id => id));
+                const activeVolunteers = uniqueVolunteersWithEscalas.size;
+                
+                console.log('👥 Voluntários únicos escalados:', activeVolunteers);
+                console.log('📋 IDs dos voluntários:', Array.from(uniqueVolunteersWithEscalas));
+                
+                // 4. Contar voluntários com escalas no histórico total (ANY escalas, não apenas este mês)
+                const allEscalasRef = collection(window.firebaseDb, 'escalas');
+                const allEscalasSnapshot = await getDocs(allEscalasRef);
+                const usersWithAnyEscalas = new Set();
+                
+                allEscalasSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.userId && (data.status === 'approved' || !data.status)) {
+                        usersWithAnyEscalas.add(data.userId);
+                    }
+                });
+                
+                // Contar voluntários sem escalas (total - com escalas)
+                const volunteersWithEscalas = usersWithAnyEscalas.size;
+                const volunteersWithoutEscalas = Math.max(0, totalVolunteers - volunteersWithEscalas);
+                
+                // Atualizar o card com as estatísticas
+                document.getElementById('stat-total-volunteers').textContent = totalVolunteers;
+                document.getElementById('stat-total-leaders').textContent = totalLeaders;
+                document.getElementById('stat-active-volunteers').textContent = activeVolunteers;
+                document.getElementById('stat-volunteers-with-escalas').textContent = volunteersWithEscalas;
+                document.getElementById('stat-volunteers-without-escalas').textContent = volunteersWithoutEscalas;
+                
+                // Atualizar timestamp
+                const now_formatted = new Date();
+                const timeStr = now_formatted.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('stat-update-time').textContent = timeStr;
+                
+                console.log('📊 Estatísticas atualizadas:', {
+                    totalVolunteers,
+                    totalLeaders,
+                    activeVolunteers,
+                    volunteersWithEscalas,
+                    volunteersWithoutEscalas
+                });
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar estatísticas:', error);
+                document.getElementById('stat-total-volunteers').textContent = '?';
+                document.getElementById('stat-total-leaders').textContent = '?';
+                document.getElementById('stat-active-volunteers').textContent = '?';
+                document.getElementById('stat-volunteers-with-escalas').textContent = '?';
+                document.getElementById('stat-volunteers-without-escalas').textContent = '?';
+            }
+        }
+
+        async function openTotalVolunteersModal() {
+            console.log('🔵 openTotalVolunteersModal chamada');
+            const { collection, getDocs, query, orderBy } = window.firestoreMethods;
+            const usersRef = collection(window.firebaseDb, 'users');
+            const q = query(usersRef, orderBy('email', 'asc'));
+            const snapshot = await getDocs(q);
+            
+            const users = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                users.push({
+                    id: doc.id,
+                    email: data.email || 'Sem email',
+                    displayName: data.displayName || data.email?.split('@')[0] || 'Sem nome',
+                    lastLoginFormatted: data.lastLoginFormatted || '🔴 Nunca acessou'
+                });
+            });
+            
+            const listElement = document.getElementById('stat-total-volunteers-list');
+            const searchInput = document.getElementById('stat-total-volunteers-search');
+            
+            function renderList(filtered) {
+                listElement.innerHTML = filtered.map(user => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${user.displayName}</p>
+                                <p class="text-sm text-gray-600">${user.email}</p>
+                                <p class="text-xs text-gray-500 mt-2">🕐 Último acesso: ${user.lastLoginFormatted}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderList(users);
+            
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = users.filter(u => 
+                    u.displayName.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+            });
+            
+            // Abrir modal
+            const modal = document.getElementById('stat-total-volunteers-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                // Fechar ao clicar no X
+                const closeBtn = document.getElementById('stat-total-volunteers-modal-close');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                }
+                
+                // Fechar ao clicar fora do modal
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+                
+                console.log('✅ Modal aberto');
+            } else {
+                console.error('❌ Modal não encontrado');
+            }
+        }
+
+        async function openTotalLeadersModal() {
+            console.log('👑 openTotalLeadersModal chamada');
+            const { collection, getDocs, query, orderBy } = window.firestoreMethods;
+            const usersRef = collection(window.firebaseDb, 'users');
+            const q = query(usersRef, orderBy('email', 'asc'));
+            const snapshot = await getDocs(q);
+            
+            const leaders = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.teamLeader && Array.isArray(data.teamLeader) && data.teamLeader.length > 0) {
+                    const teamEmojis = {
+                        welcome: '👋',
+                        backstage: '🤝',
+                        parking: '🚗',
+                        kids: '👶',
+                        comunicacao: '📢'
+                    };
+                    leaders.push({
+                        id: doc.id,
+                        email: data.email || 'Sem email',
+                        displayName: data.displayName || data.email?.split('@')[0] || 'Sem nome',
+                        lastLoginFormatted: data.lastLoginFormatted || '🔴 Nunca acessou',
+                        teams: data.teamLeader.map(t => `${teamEmojis[t] || ''} ${t}`).join(', ')
+                    });
+                }
+            });
+            
+            const listElement = document.getElementById('stat-total-leaders-list');
+            const searchInput = document.getElementById('stat-total-leaders-search');
+            
+            function renderList(filtered) {
+                listElement.innerHTML = filtered.map(leader => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${leader.displayName}</p>
+                                <p class="text-sm text-gray-600">${leader.email}</p>
+                                <p class="text-xs text-purple-600 font-medium mt-1">Líder de: ${leader.teams}</p>
+                                <p class="text-xs text-gray-500 mt-2">🕐 Último acesso: ${leader.lastLoginFormatted}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderList(leaders);
+            
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = leaders.filter(u => 
+                    u.displayName.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+            });
+            
+            // Abrir modal
+            const modal = document.getElementById('stat-total-leaders-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                // Fechar ao clicar no X
+                const closeBtn = document.getElementById('stat-total-leaders-modal-close');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                }
+                
+                // Fechar ao clicar fora do modal
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+                
+                console.log('✅ Modal de líderes aberto');
+            } else {
+                console.error('❌ Modal de líderes não encontrado');
+            }
+        }
+
+        async function openVolunteersWithEscalasModal() {
+            console.log('✅ openVolunteersWithEscalasModal chamada');
+            const { collection, getDocs } = window.firestoreMethods;
+            
+            // Buscar usuários primeiro para ter os nomes corretos
+            const usersRef = collection(window.firebaseDb, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            const userMap = new Map();
+            usersSnapshot.forEach(doc => {
+                userMap.set(doc.id, doc.data());
+            });
+            
+            // Buscar escalas e contar por usuário
+            const escalasRef = collection(window.firebaseDb, 'escalas');
+            const snapshot = await getDocs(escalasRef);
+            
+            const usersWithEscalas = new Map();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.userId && (data.status === 'approved' || !data.status)) {
+                    if (!usersWithEscalas.has(data.userId)) {
+                        const userData = userMap.get(data.userId);
+                        usersWithEscalas.set(data.userId, {
+                            userId: data.userId,
+                            email: userData?.email || data.userEmail || 'Sem email',
+                            displayName: userData?.displayName || data.volunteerName || 'Sem nome',
+                            lastLogin: userData?.lastLoginFormatted || '🔴 Nunca acessou',
+                            count: 0
+                        });
+                    }
+                    usersWithEscalas.get(data.userId).count++;
+                }
+            });
+            
+            const users = Array.from(usersWithEscalas.values()).sort((a, b) => b.count - a.count);
+            
+            const listElement = document.getElementById('stat-volunteers-with-escalas-list');
+            const searchInput = document.getElementById('stat-volunteers-with-escalas-search');
+            
+            function renderList(filtered) {
+                listElement.innerHTML = filtered.map(user => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${user.displayName}</p>
+                                <p class="text-sm text-gray-600">${user.email}</p>
+                                <p class="text-xs text-emerald-600 font-medium mt-1">📊 ${user.count} escala(s)</p>
+                                <p class="text-xs text-gray-500 mt-2">🕐 Último acesso: ${user.lastLogin}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderList(users);
+            
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = users.filter(u => 
+                    u.displayName.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+            });
+            
+            // Abrir modal
+            const modal = document.getElementById('stat-volunteers-with-escalas-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                // Fechar ao clicar no X
+                const closeBtn = document.getElementById('stat-volunteers-with-escalas-modal-close');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                }
+                
+                // Fechar ao clicar fora do modal
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+                
+                console.log('✅ Modal de voluntários com escalas aberto');
+            } else {
+                console.error('❌ Modal não encontrado');
+            }
+        }
+
+        async function openActiveVolunteersModal() {
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            
+            // Formatar datas como strings YYYY-MM-DD para comparação
+            const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+            const lastDayStr = lastDayOfMonth.toISOString().split('T')[0];
+            
+            const { collection, getDocs } = window.firestoreMethods;
+            
+            // Buscar usuários primeiro para ter os nomes corretos
+            const usersRef = collection(window.firebaseDb, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            const userMap = new Map();
+            usersSnapshot.forEach(doc => {
+                userMap.set(doc.id, doc.data());
+            });
+            
+            // Buscar todas as escalas deste mês
+            const escalasRef = collection(window.firebaseDb, 'escalas');
+            const escalasSnapshot = await getDocs(escalasRef);
+            
+            const usersEscalas = new Map();
+            escalasSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.userId && (data.status === 'approved' || !data.status) && data.date) {
+                    // Comparar strings de data (YYYY-MM-DD)
+                    if (data.date >= firstDayStr && data.date <= lastDayStr) {
+                        if (!usersEscalas.has(data.userId)) {
+                            const userData = userMap.get(data.userId);
+                            usersEscalas.set(data.userId, {
+                                userId: data.userId,
+                                email: userData?.email || data.userEmail || 'Sem email',
+                                displayName: userData?.displayName || data.volunteerName || 'Sem nome',
+                                lastLogin: userData?.lastLoginFormatted || '🔴 Nunca acessou',
+                                count: 0
+                            });
+                        }
+                        usersEscalas.get(data.userId).count++;
+                    }
+                }
+            });
+            
+            const users = Array.from(usersEscalas.values()).sort((a, b) => b.count - a.count);
+            
+            const listElement = document.getElementById('stat-active-volunteers-list');
+            const searchInput = document.getElementById('stat-active-volunteers-search');
+            
+            function renderList(filtered) {
+                if (filtered.length === 0) {
+                    listElement.innerHTML = '<p class="text-center text-gray-500 py-4">Nenhum voluntário escalado neste mês</p>';
+                    return;
+                }
+                listElement.innerHTML = filtered.map(user => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${user.displayName}</p>
+                                <p class="text-sm text-gray-600">${user.email}</p>
+                                <p class="text-xs text-green-600 font-medium mt-1">📊 ${user.count} escala(s) este mês</p>
+                                <p class="text-xs text-gray-500 mt-2">🕐 Último acesso: ${user.lastLogin}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderList(users);
+            
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = users.filter(u => 
+                    u.displayName.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+            });
+            
+            // Abrir modal
+            const modal = document.getElementById('stat-active-volunteers-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                // Fechar ao clicar no X
+                const closeBtn = document.getElementById('stat-active-volunteers-modal-close');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                }
+                
+                // Fechar ao clicar fora do modal
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+                
+                console.log('✅ Modal de escalados este mês aberto');
+            } else {
+                console.error('❌ Modal não encontrado');
+            }
+        }
+
+        async function openVolunteersWithoutEscalasModal() {
+            const { collection, getDocs, query, orderBy } = window.firestoreMethods;
+            const usersRef = collection(window.firebaseDb, 'users');
+            const q = query(usersRef, orderBy('email', 'asc'));
+            const usersSnapshot = await getDocs(q);
+            
+            // Buscar todos os usuários com escalas
+            const escalasRef = collection(window.firebaseDb, 'escalas');
+            const escalasSnapshot = await getDocs(escalasRef);
+            const usersWithEscalas = new Set();
+            
+            escalasSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.userId && (data.status === 'approved' || !data.status)) {
+                    usersWithEscalas.add(data.userId);
+                }
+            });
+            
+            // Filtrar usuários sem escalas
+            const users = [];
+            usersSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (!usersWithEscalas.has(doc.id)) {
+                    users.push({
+                        id: doc.id,
+                        email: data.email || 'Sem email',
+                        displayName: data.displayName || data.email?.split('@')[0] || 'Sem nome',
+                        lastLoginFormatted: data.lastLoginFormatted || '🔴 Nunca acessou'
+                    });
+                }
+            });
+            
+            const listElement = document.getElementById('stat-volunteers-without-escalas-list');
+            const searchInput = document.getElementById('stat-volunteers-without-escalas-search');
+            
+            function renderList(filtered) {
+                listElement.innerHTML = filtered.map(user => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">${user.displayName}</p>
+                                <p class="text-sm text-gray-600">${user.email}</p>
+                                <p class="text-xs text-slate-600 font-medium mt-1">❌ Sem escalas</p>
+                                <p class="text-xs text-gray-500 mt-2">🕐 Último acesso: ${user.lastLoginFormatted}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderList(users);
+            
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = users.filter(u => 
+                    u.displayName.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+            });
+            
+            // Abrir modal
+            const modal = document.getElementById('stat-volunteers-without-escalas-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                
+                // Fechar ao clicar no X
+                const closeBtn = document.getElementById('stat-volunteers-without-escalas-modal-close');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                }
+                
+                // Fechar ao clicar fora do modal
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+                
+                console.log('✅ Modal de voluntários sem escalas aberto');
+            } else {
+                console.error('❌ Modal não encontrado');
+            }
+        }
+
         // ========================================
         // 🚀 INICIALIZAÇÃO DO APP - v2.4.0
         // ========================================
@@ -1622,7 +2549,6 @@
                 userEmail: document.getElementById('user-email'),
                 userPhoto: document.getElementById('user-photo'),
                 cultoSelect: document.getElementById('culto-select'),
-                saveEscalaBtn: document.getElementById('save-escala-btn'),
                 escalasList: document.getElementById('escalas-list'),
                 adminView: document.getElementById('admin-view'),
                 teamBtns: document.querySelectorAll('.team-btn'),
@@ -1769,6 +2695,64 @@
                 });
             }
 
+            // Navegação para página de Escalar Voluntários Manualmente
+            const menuManualScaleBtn = document.getElementById('menu-manual-scale-btn');
+            const backFromManualScaleBtn = document.getElementById('back-from-manual-scale');
+            const manualScalePage = document.getElementById('manual-scale-page');
+
+            if (menuManualScaleBtn) {
+                menuManualScaleBtn.addEventListener('click', () => {
+                    closeMenu();
+                    appContainer.classList.add('hidden');
+                    manualScalePage.classList.remove('hidden');
+                    initManualScalePanel(); // Inicializar painel de escala manual
+                });
+            }
+
+            if (backFromManualScaleBtn) {
+                backFromManualScaleBtn.addEventListener('click', () => {
+                    manualScalePage.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    resetManualScalePanel(); // Resetar formulário
+                });
+            }
+
+            // Navegação para página de Logs de Auditoria
+            const menuAuditLogsBtn = document.getElementById('menu-audit-logs-btn');
+            const backFromAuditLogsBtn = document.getElementById('back-from-audit-logs');
+            const auditLogsPage = document.getElementById('audit-logs-page');
+            const refreshAuditLogsBtn = document.getElementById('refresh-audit-logs');
+            const auditLogFilter = document.getElementById('audit-log-filter');
+            const auditLogPeriod = document.getElementById('audit-log-period');
+
+            if (menuAuditLogsBtn) {
+                menuAuditLogsBtn.addEventListener('click', () => {
+                    closeMenu();
+                    appContainer.classList.add('hidden');
+                    auditLogsPage.classList.remove('hidden');
+                    loadAuditLogs();
+                });
+            }
+
+            if (backFromAuditLogsBtn) {
+                backFromAuditLogsBtn.addEventListener('click', () => {
+                    auditLogsPage.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                });
+            }
+
+            if (refreshAuditLogsBtn) {
+                refreshAuditLogsBtn.addEventListener('click', () => loadAuditLogs());
+            }
+
+            if (auditLogFilter) {
+                auditLogFilter.addEventListener('change', () => loadAuditLogs());
+            }
+
+            if (auditLogPeriod) {
+                auditLogPeriod.addEventListener('change', () => loadAuditLogs());
+            }
+
             // Navegação para página de Dashboard
             const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
             const backFromDashboardBtn = document.getElementById('back-from-dashboard');
@@ -1850,14 +2834,25 @@
             const leadershipMenuItems = document.getElementById('leadership-menu-items');
             const leadershipMenuArrow = document.getElementById('leadership-menu-arrow');
 
+            // Grupo 3: Menu Administrativo
+            const toggleAdminMenu = document.getElementById('toggle-admin-menu');
+            const adminMenuItems = document.getElementById('admin-menu-items');
+            const adminMenuArrow = document.getElementById('admin-menu-arrow');
+
             if (toggleMyMenu) {
                 toggleMyMenu.addEventListener('click', () => {
                     const isExpanding = myMenuItems.classList.contains('hidden');
                     
-                    // Se estiver expandindo o grupo 1, retrair o grupo 2
-                    if (isExpanding && leadershipMenuItems) {
-                        leadershipMenuItems.classList.add('hidden');
-                        leadershipMenuArrow.classList.remove('rotate-90');
+                    // Se estiver expandindo o grupo 1, retrair os outros
+                    if (isExpanding) {
+                        if (leadershipMenuItems) {
+                            leadershipMenuItems.classList.add('hidden');
+                            leadershipMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (adminMenuItems) {
+                            adminMenuItems.classList.add('hidden');
+                            adminMenuArrow.classList.remove('rotate-90');
+                        }
                     }
                     
                     myMenuItems.classList.toggle('hidden');
@@ -1869,14 +2864,41 @@
                 toggleLeadershipMenu.addEventListener('click', () => {
                     const isExpanding = leadershipMenuItems.classList.contains('hidden');
                     
-                    // Se estiver expandindo o grupo 2, retrair o grupo 1
-                    if (isExpanding && myMenuItems) {
-                        myMenuItems.classList.add('hidden');
-                        myMenuArrow.classList.remove('rotate-90');
+                    // Se estiver expandindo o grupo 2, retrair os outros
+                    if (isExpanding) {
+                        if (myMenuItems) {
+                            myMenuItems.classList.add('hidden');
+                            myMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (adminMenuItems) {
+                            adminMenuItems.classList.add('hidden');
+                            adminMenuArrow.classList.remove('rotate-90');
+                        }
                     }
                     
                     leadershipMenuItems.classList.toggle('hidden');
                     leadershipMenuArrow.classList.toggle('rotate-90');
+                });
+            }
+
+            if (toggleAdminMenu) {
+                toggleAdminMenu.addEventListener('click', () => {
+                    const isExpanding = adminMenuItems.classList.contains('hidden');
+                    
+                    // Se estiver expandindo o grupo 3, retrair os outros
+                    if (isExpanding) {
+                        if (myMenuItems) {
+                            myMenuItems.classList.add('hidden');
+                            myMenuArrow.classList.remove('rotate-90');
+                        }
+                        if (leadershipMenuItems) {
+                            leadershipMenuItems.classList.add('hidden');
+                            leadershipMenuArrow.classList.remove('rotate-90');
+                        }
+                    }
+                    
+                    adminMenuItems.classList.toggle('hidden');
+                    adminMenuArrow.classList.toggle('rotate-90');
                 });
             }
 
@@ -2196,13 +3218,8 @@
                     
                     selectedTeam = btn.dataset.team;
                     
-                    // Animar botão Salvar Escala após selecionar o time
-                    setTimeout(() => {
-                        elements.saveEscalaBtn.classList.add('pulse-save');
-                        setTimeout(() => {
-                            elements.saveEscalaBtn.classList.remove('pulse-save');
-                        }, 1000); // 2 piscadas x 0.5s = 1s
-                    }, 200); // pequeno delay para o usuário perceber a transição
+                    // Chamar saveEscala diretamente após selecionar o time
+                    saveEscala();
                 });
             });
 
@@ -2412,16 +3429,22 @@
                         }
                         isAdmin = true;
                         isSuperAdmin = true;
-                        // Mostrar grupo de liderança e super admin
-                        document.getElementById('leadership-menu-group').style.display = 'block';
-                        document.getElementById('superadmin-menu-group').style.display = 'block';
-                        // Itens individuais dentro dos grupos
-                        document.getElementById('menu-admin-btn').style.display = 'block';
-                        document.getElementById('menu-manage-admins-btn').style.display = 'block';
-                        document.getElementById('menu-dashboard-btn').style.display = 'block';
-                        document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
-                        document.getElementById('menu-pending-escalas-btn').style.display = 'block';
-                        document.getElementById('menu-checkin-btn').style.display = 'block';
+                        // Mostrar grupo de liderança e menu administrativo
+                        const leadershipGroup = document.getElementById('leadership-menu-group');
+                        const adminGroup = document.getElementById('admin-menu-group');
+                        if (leadershipGroup) leadershipGroup.style.display = 'block';
+                        if (adminGroup) adminGroup.style.display = 'block';
+                        // Itens individuais dentro do grupo de liderança
+                        const menuAdminBtn = document.getElementById('menu-admin-btn');
+                        const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                        const menuBlockedBtn = document.getElementById('menu-blocked-attempts-btn');
+                        const menuPendingBtn = document.getElementById('menu-pending-escalas-btn');
+                        const menuCheckinBtn = document.getElementById('menu-checkin-btn');
+                        if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                        if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
+                        if (menuBlockedBtn) menuBlockedBtn.style.display = 'block';
+                        if (menuPendingBtn) menuPendingBtn.style.display = 'block';
+                        if (menuCheckinBtn) menuCheckinBtn.style.display = 'block';
                         updateBlockedAttemptsBadge(); // Atualizar badge
                         updatePendingEscalasBadge(); // Atualizar badge
                         console.log('✅ Usuário É SUPER ADMINISTRADOR');
@@ -2436,16 +3459,22 @@
                         if (data.role === 'superadmin') {
                             isAdmin = true;
                             isSuperAdmin = true;
-                            // Mostrar grupo de liderança e super admin
-                            document.getElementById('leadership-menu-group').style.display = 'block';
-                            document.getElementById('superadmin-menu-group').style.display = 'block';
-                            // Itens individuais dentro dos grupos
-                            document.getElementById('menu-admin-btn').style.display = 'block';
-                            document.getElementById('menu-manage-admins-btn').style.display = 'block';
-                            document.getElementById('menu-dashboard-btn').style.display = 'block';
-                            document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
-                            document.getElementById('menu-pending-escalas-btn').style.display = 'block';
-                            document.getElementById('menu-checkin-btn').style.display = 'block';
+                            // Mostrar grupo de liderança e menu administrativo
+                            const leadershipGroup = document.getElementById('leadership-menu-group');
+                            const adminGroup = document.getElementById('admin-menu-group');
+                            if (leadershipGroup) leadershipGroup.style.display = 'block';
+                            if (adminGroup) adminGroup.style.display = 'block';
+                            // Itens individuais dentro do grupo de liderança
+                            const menuAdminBtn = document.getElementById('menu-admin-btn');
+                            const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                            const menuBlockedBtn = document.getElementById('menu-blocked-attempts-btn');
+                            const menuPendingBtn = document.getElementById('menu-pending-escalas-btn');
+                            const menuCheckinBtn = document.getElementById('menu-checkin-btn');
+                            if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                            if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
+                            if (menuBlockedBtn) menuBlockedBtn.style.display = 'block';
+                            if (menuPendingBtn) menuPendingBtn.style.display = 'block';
+                            if (menuCheckinBtn) menuCheckinBtn.style.display = 'block';
                             updateBlockedAttemptsBadge(); // Atualizar badge
                             updatePendingEscalasBadge(); // Atualizar badge
                             console.log('✅ Usuário É SUPER ADMINISTRADOR');
@@ -2454,12 +3483,15 @@
                             isAdmin = true;
                             isSuperAdmin = false;
                             // Mostrar apenas grupo de liderança
-                            document.getElementById('leadership-menu-group').style.display = 'block';
-                            document.getElementById('superadmin-menu-group').style.display = 'none';
+                            const leadershipGroup = document.getElementById('leadership-menu-group');
+                            const adminGroup = document.getElementById('admin-menu-group');
+                            if (leadershipGroup) leadershipGroup.style.display = 'block';
+                            if (adminGroup) adminGroup.style.display = 'none';
                             // Itens individuais dentro do grupo de liderança
-                            document.getElementById('menu-admin-btn').style.display = 'block';
-                            document.getElementById('menu-manage-admins-btn').style.display = 'none'; // Admin não gerencia usuários
-                            document.getElementById('menu-dashboard-btn').style.display = 'block';
+                            const menuAdminBtn = document.getElementById('menu-admin-btn');
+                            const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                            if (menuAdminBtn) menuAdminBtn.style.display = 'block';
+                            if (menuDashboardBtn) menuDashboardBtn.style.display = 'block';
                             document.getElementById('menu-blocked-attempts-btn').style.display = 'block';
                             document.getElementById('menu-pending-escalas-btn').style.display = 'block';
                             document.getElementById('menu-checkin-btn').style.display = 'block';
@@ -2477,12 +3509,15 @@
                     isAdmin = false;
                     isSuperAdmin = false;
                     // Ocultar grupos de admin
-                    document.getElementById('leadership-menu-group').style.display = 'none';
-                    document.getElementById('superadmin-menu-group').style.display = 'none';
-                    // Ocultar itens individuais também
-                    document.getElementById('menu-admin-btn').style.display = 'none';
-                    document.getElementById('menu-manage-admins-btn').style.display = 'none';
-                    document.getElementById('menu-dashboard-btn').style.display = 'none';
+                    const leadershipGroup = document.getElementById('leadership-menu-group');
+                    const adminGroup = document.getElementById('admin-menu-group');
+                    if (leadershipGroup) leadershipGroup.style.display = 'none';
+                    if (adminGroup) adminGroup.style.display = 'none';
+                    // Ocultar itens individuais do grupo de liderança
+                    const menuAdminBtn = document.getElementById('menu-admin-btn');
+                    const menuDashboardBtn = document.getElementById('menu-dashboard-btn');
+                    if (menuAdminBtn) menuAdminBtn.style.display = 'none';
+                    if (menuDashboardBtn) menuDashboardBtn.style.display = 'none';
                     document.getElementById('menu-blocked-attempts-btn').style.display = 'none';
                     document.getElementById('menu-pending-escalas-btn').style.display = 'none';
                     document.getElementById('menu-checkin-btn').style.display = 'none';
@@ -2658,18 +3693,28 @@
                     }
 
                     // Verificar se falta menos de 24h para o evento OU se é time KIDS
+                    // Permitir inscrição até 1h APÓS o início do evento (para última hora)
                     const eventDateTime = new Date(`${date}T${time}`);
+                    const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
                     const now = new Date();
                     const hoursUntilEvent = (eventDateTime - now) / (1000 * 60 * 60);
+                    const hoursUntilEventEnd = (eventEndTime - now) / (1000 * 60 * 60);
                     
-                    console.log('⏰ Verificação 24h:');
+                    console.log('⏰ Verificação 24h (com janela de 1h após início):');
                     console.log('  Data/Hora evento:', eventDateTime);
+                    console.log('  Data/Hora fim (evento + 1h):', eventEndTime);
                     console.log('  Data/Hora atual:', now);
                     console.log('  Horas até evento:', hoursUntilEvent);
+                    console.log('  Horas até fim da janela:', hoursUntilEventEnd);
                     console.log('  Time selecionado:', team);
                     
-                    // Kids sempre vai para pendente, independente do horário
-                    const isPending = (hoursUntilEvent < 24 && hoursUntilEvent > 0) || team === 'kids';
+                    // Determinar se é pending
+                    // - Kids SEMPRE vai para PENDING (mesmo dentro da janela rápida)
+                    // - Se falta < 24h e ainda não começou → PENDING
+                    // - Se evento já começou e está dentro da janela de 1h → CONFIRMADO (entrada rápida) exceto Kids
+                    const isDuringQuickEntryWindow = hoursUntilEvent < 0 && hoursUntilEventEnd > 0; // Evento iniciado, dentro de 1h
+                    const isPending = team === 'kids' || ((hoursUntilEvent < 24 && hoursUntilEvent > 0) && !isDuringQuickEntryWindow);
+                    console.log('  Está na janela de entrada rápida (1h após início)?', isDuringQuickEntryWindow);
                     console.log('  É pendente (<24h ou Kids)?', isPending);
                     
                     // Verificar limite de voluntários no time para esta data/hora
@@ -2855,7 +3900,10 @@
                     console.log('  team:', team);
                     console.log('  date/time:', date, time);
                     
-                    const { doc, setDoc } = window.firestoreMethods;
+                    const { doc, setDoc, Timestamp } = window.firestoreMethods;
+                    
+                    // Converter date (YYYY-MM-DD) e time (HH:MM) para Timestamp do Firestore
+                    const eventDateTime = new Date(`${date}T${time}:00`);
                     
                     const escalaData = {
                         userId: currentUser.uid,
@@ -2869,7 +3917,8 @@
                         createdAt: new Date().toISOString(),
                         status: status,
                         requestedTeam: team,
-                        requestTimestamp: new Date().toISOString()
+                        requestTimestamp: new Date().toISOString(),
+                        eventTimestamp: Timestamp.fromDate(eventDateTime)
                     };
                     
                     console.log('💾 Dados da escala:', escalaData);
@@ -2969,12 +4018,24 @@
                         allEscalas.push({ id: doc.id, ...doc.data() });
                     });
 
-                    // Filtrar apenas eventos futuros (baseado em data+hora completa)
+                    // Filtrar eventos visíveis (até 1h após início)
                     const now = new Date();
+                    console.log('🔍 DEBUG loadUserEscalas - now:', now.toString(), '| UTC:', now.toISOString());
                     
                     const escalas = allEscalas.filter(escala => {
                         const eventDateTime = new Date(escala.date + 'T' + escala.time);
-                        return eventDateTime > now; // Mostra apenas eventos futuros
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        const isVisible = eventEndTime > now;
+                        
+                        if (escala.date === '2025-12-04' && escala.time === '19:00') {
+                            console.log('🔍 DEBUG loadUserEscalas - Evento 04/12 19h:');
+                            console.log('  eventDateTime:', eventDateTime.toString(), '| UTC:', eventDateTime.toISOString());
+                            console.log('  eventEndTime:', eventEndTime.toString(), '| UTC:', eventEndTime.toISOString());
+                            console.log('  now:', now.toString());
+                            console.log('  isVisible:', isVisible);
+                        }
+                        
+                        return isVisible; // Mostra até 1h após início
                     });
 
                     // Ordenar por data e horário (ordem crescente)
@@ -3134,6 +4195,7 @@
                     if (datesDoc.exists()) {
                         availableDates = datesDoc.data().dates || [];
                         console.log('📦 Datas encontradas no Firestore:', availableDates.length);
+                        console.log('🔍 DEBUG - TODAS as datas do Firestore:', availableDates.map(d => d.value));
                         console.log('🔍 DEBUG - Primeira data (exemplo):', availableDates[0]);
                         
                         // Adicionar teamLimits padrão se não existir (retrocompatibilidade)
@@ -3154,16 +4216,17 @@
                             return date;
                         });
                         
-                        // Filtrar apenas eventos futuros
+                        // Filtrar apenas eventos futuros (até 1h após o início)
                         const now = new Date();
                         console.log('🔍 DEBUG - Data/hora atual:', now.toISOString());
                         const initialCount = availableDates.length;
                         availableDates = availableDates.filter(d => {
                             const [date, time] = d.value.split('|');
                             const eventDateTime = new Date(date + 'T' + time);
-                            const isFuture = eventDateTime > now;
-                            console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Futuro? ${isFuture}`);
-                            return isFuture;
+                            const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                            const isVisible = eventEndTime > now; // Visível até 1h após início
+                            console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Fim janela: ${eventEndTime.toISOString()} → Visível? ${isVisible}`);
+                            return isVisible;
                         });
                         
                         console.log(`🧹 Filtrado: ${initialCount} → ${availableDates.length} eventos futuros`);
@@ -3197,9 +4260,11 @@
                 console.log('🔍 updateCultoDropdown chamado');
                 console.log('🔍 Datas disponíveis:', availableDates.length);
                 console.log('🔍 Escalas do usuário:', escalas.length);
+                console.log('🔍 Escalas detalhes:', escalas.map(e => `${e.date}_${e.time} (${e.team})`));
 
                 // Criar set com data+hora já escaladas (formato: date_time)
                 const escaladasDateTimes = new Set(escalas.map(e => `${e.date}_${e.time}`));
+                console.log('🔍 Datas já escaladas:', Array.from(escaladasDateTimes));
                 
                 // Data/hora atual
                 const now = new Date();
@@ -3213,12 +4278,13 @@
                 defaultOption.textContent = 'Escolha uma data...';
                 select.appendChild(defaultOption);
 
-                // Filtrar apenas eventos futuros e ordenar por data
+                // Filtrar eventos visíveis (até 1h após o início) e ordenar por data
                 const sortedDates = [...availableDates]
                     .filter(option => {
                         const [date, time] = option.value.split('|');
                         const eventDateTime = new Date(date + 'T' + time);
-                        return eventDateTime > now;
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        return eventEndTime > now; // Visível até 1h após início
                     })
                     .sort((a, b) => {
                         const dateA = a.value.split('|')[0];
@@ -3230,6 +4296,7 @@
                 sortedDates.forEach(option => {
                     const [date, time] = option.value.split('|');
                     const dateTimeKey = `${date}_${time}`;
+                    console.log(`🔍 Verificando ${dateTimeKey}: já escalado? ${escaladasDateTimes.has(dateTimeKey)}`);
                     if (!escaladasDateTimes.has(dateTimeKey)) {
                         const optionElement = document.createElement('option');
                         optionElement.value = option.value;
@@ -3385,9 +4452,36 @@
                         escalas.push({ id: doc.id, ...doc.data() });
                     });
 
-                    // Agrupar por data e time
+                    console.log('🔍 DEBUG loadAllEscalas - Total de escalas carregadas do Firestore:', escalas.length);
+                    
+                    // Log de TODAS as escalas do evento 04/12 19:00 ANTES do filtro
+                    const escalas0412 = escalas.filter(e => e.date === '2025-12-04' && e.time === '19:00');
+                    console.log('🔍 DEBUG loadAllEscalas - TODAS as escalas do evento 04/12 19:00 (antes do filtro):', escalas0412.length);
+                    console.log('🔍 DEBUG loadAllEscalas - Detalhes:', escalas0412.map(e => ({
+                        nome: e.userName,
+                        team: e.team,
+                        status: e.status || 'SEM STATUS',
+                        userId: e.userId
+                    })));
+                    
+                    // Filtrar apenas escalas aprovadas para a visão geral
+                    const approvedEscalas = escalas.filter(e => {
+                        const status = e.status || 'approved'; // Default é approved se não tiver status
+                        return status === 'approved';
+                    });
+                    
+                    console.log('🔍 DEBUG loadAllEscalas - Escalas aprovadas:', approvedEscalas.length);
+                    console.log('🔍 DEBUG loadAllEscalas - Escalas APROVADAS do evento 04/12 19:00:', 
+                        approvedEscalas.filter(e => e.date === '2025-12-04' && e.time === '19:00').map(e => ({
+                            nome: e.userName,
+                            team: e.team,
+                            status: e.status || 'SEM STATUS'
+                        }))
+                    );
+
+                    // Agrupar por data e time (apenas aprovadas)
                     const grouped = {};
-                    escalas.forEach(escala => {
+                    approvedEscalas.forEach(escala => {
                         const key = `${escala.date}_${escala.time}`;
                         if (!grouped[key]) {
                             grouped[key] = {
@@ -3404,19 +4498,51 @@
                         grouped[key][escala.team].push(escala);
                     });
 
-                    // Filtrar eventos passados ANTES de armazenar (baseado na data+hora completa)
+                    // Garantir que eventos futuros sem inscrições também apareçam na visão admin
+                    const nowForAvailable = new Date();
+                    availableDates.forEach(dateObj => {
+                        const [date, time] = dateObj.value.split('|');
+                        const eventDateTime = new Date(date + 'T' + time);
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000));
+                        const isVisible = eventEndTime > nowForAvailable; // segue a regra de 1h após início
+                        const key = `${date}_${time}`;
+                        if (isVisible && !grouped[key]) {
+                            grouped[key] = {
+                                date,
+                                time,
+                                eventName: dateObj.text || '',
+                                welcome: [],
+                                backstage: [],
+                                parking: [],
+                                kids: [],
+                                comunicacao: []
+                            };
+                        }
+                    });
+
+                    // Filtrar eventos visíveis (até 1h após início) ANTES de armazenar
                     const now = new Date();
                     const filteredGrouped = {};
+                    
+                    console.log('🔍 DEBUG loadAllEscalas - now:', now.toString(), '| UTC:', now.toISOString());
+                    console.log('🔍 DEBUG loadAllEscalas - Total de eventos agrupados:', Object.keys(grouped).length);
                     
                     Object.keys(grouped).forEach(key => {
                         const data = grouped[key];
                         const eventDateTime = new Date(data.date + 'T' + data.time);
-                        // Só incluir eventos que ainda não aconteceram (data+hora futura)
-                        if (eventDateTime > now) {
+                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        const isVisible = eventEndTime > now;
+                        
+                        console.log(`🔍 DEBUG loadAllEscalas - Evento ${key}: início=${eventDateTime.toString()}, fim=${eventEndTime.toString()}, now=${now.toString()}, visível=${isVisible}`);
+                        
+                        // Incluir eventos até 1h após o início
+                        if (isVisible) {
                             filteredGrouped[key] = data;
                         }
                     });
 
+                    console.log('🔍 DEBUG loadAllEscalas - Eventos após filtro:', Object.keys(filteredGrouped).length);
+                    
                     // Armazenar apenas eventos futuros
                     allEscalasGrouped = filteredGrouped;
                     
@@ -3837,9 +4963,9 @@
                             console.log('🔍 firebaseDb existe?', !!window.firebaseDb);
                             console.log('🔍 firestoreMethods existe?', !!window.firestoreMethods);
                             
-                            const { doc, deleteDoc } = window.firestoreMethods;
+                            const { doc, deleteDoc, getDoc } = window.firestoreMethods;
                             
-                            if (!doc || !deleteDoc) {
+                            if (!doc || !deleteDoc || !getDoc) {
                                 throw new Error('Métodos Firestore não disponíveis');
                             }
                             
@@ -3847,8 +4973,31 @@
                             const docRef = doc(window.firebaseDb, 'blockedAttempts', attemptId);
                             console.log('🔵 Referência criada:', docRef);
                             
+                            // Buscar dados da tentativa antes de deletar (para o log)
+                            console.log('🔵 Buscando dados da tentativa bloqueada...');
+                            const attemptDoc = await getDoc(docRef);
+                            
+                            if (!attemptDoc.exists()) {
+                                throw new Error('Tentativa bloqueada não encontrada');
+                            }
+                            
+                            const attemptData = attemptDoc.data();
+                            console.log('🔵 Dados da tentativa:', attemptData);
+                            
                             console.log('🔵 Executando deleteDoc...');
                             await deleteDoc(docRef);
+                            
+                            // Registrar log de auditoria
+                            await logAudit('DELETE_BLOCKED_ATTEMPT', {
+                                attemptId: attemptId,
+                                userName: attemptData.userName || attemptData.userEmail,
+                                userId: attemptData.userId,
+                                date: attemptData.date,
+                                time: attemptData.time,
+                                eventName: attemptData.eventName,
+                                team: attemptData.team,
+                                reason: attemptData.reason || 'Não especificado'
+                            });
                             
                             console.log('✅ Tentativa excluída com sucesso!');
                             showModal('✅ Tentativa excluída com sucesso!');
@@ -4113,6 +5262,19 @@
                     // Atualizar escala
                     await updateDoc(escalaRef, updateData);
                     
+                    // Registrar log de auditoria
+                    await logAudit('APPROVE_PENDING', {
+                        escalaId: escalaId,
+                        volunteerName: escalaData.userName || escalaData.userEmail,
+                        volunteerId: escalaData.userId,
+                        date: escalaData.date,
+                        time: escalaData.time,
+                        eventName: escalaData.eventName,
+                        requestedTeam: requestedTeam,
+                        approvedTeam: selectedTeam,
+                        teamChanged: teamChanged
+                    });
+                    
                     console.log('✅ Escala aprovada com sucesso!');
                     showModal(`✅ Escala aprovada! ${teamChanged ? 'Time ajustado para melhor organização.' : ''}`);
                     
@@ -4125,6 +5287,201 @@
                 }
             }
             
+            // Registrar log de auditoria
+            async function logAudit(action, details) {
+                try {
+                    console.log('🔍 DEBUG - Tentando criar log de auditoria...');
+                    console.log('🔍 DEBUG - Action:', action);
+                    console.log('🔍 DEBUG - Details antes de limpar:', details);
+                    console.log('🔍 DEBUG - currentUser:', currentUser);
+                    
+                    const { collection, addDoc } = window.firestoreMethods;
+                    
+                    // Limpar campos undefined do details
+                    const cleanedDetails = {};
+                    for (const key in details) {
+                        if (details[key] !== undefined && details[key] !== null && details[key] !== '') {
+                            cleanedDetails[key] = details[key];
+                        }
+                    }
+                    
+                    console.log('🔍 DEBUG - Details após limpar:', cleanedDetails);
+                    
+                    const logData = {
+                        action: action,
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email,
+                        userName: currentUser.displayName || currentUser.email,
+                        timestamp: new Date().toISOString(),
+                        details: cleanedDetails
+                    };
+                    
+                    console.log('🔍 DEBUG - Log data a ser salvo:', logData);
+                    const docRef = await addDoc(collection(window.firebaseDb, 'audit_logs'), logData);
+                    console.log('✅ Log de auditoria registrado com ID:', docRef.id);
+                    console.log('📋 Log de auditoria registrado:', action);
+                } catch (error) {
+                    console.error('❌ Erro ao registrar log:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                }
+            }
+
+            // Carregar logs de auditoria (apenas superadmin)
+            async function loadAuditLogs() {
+                if (!isSuperAdmin) {
+                    document.getElementById('audit-logs-list').innerHTML = 
+                        '<p class="text-center text-red-500 py-8">⚠️ Acesso negado. Apenas Super Administradores podem visualizar logs.</p>';
+                    return;
+                }
+                
+                try {
+                    console.log('🔍 DEBUG - Carregando logs de auditoria...');
+                    console.log('🔍 DEBUG - isSuperAdmin:', isSuperAdmin);
+                    
+                    const { collection, getDocs, query, orderBy: orderByField, limit } = window.firestoreMethods;
+                    const logsList = document.getElementById('audit-logs-list');
+                    const filterValue = document.getElementById('audit-log-filter').value;
+                    const periodValue = document.getElementById('audit-log-period').value;
+                    
+                    console.log('🔍 DEBUG - Filtro:', filterValue, 'Período:', periodValue);
+                    
+                    logsList.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 mx-auto"></div><p class="text-gray-600 mt-4">Carregando logs...</p></div>';
+                    
+                    const logsRef = collection(window.firebaseDb, 'audit_logs');
+                    // Buscar todos os logs ordenados, sem filtro de action (para evitar índice composto)
+                    const q = query(logsRef, orderByField('timestamp', 'desc'), limit(200));
+                    
+                    console.log('🔍 DEBUG - Executando query...');
+                    const logsSnapshot = await getDocs(q);
+                    console.log('🔍 DEBUG - Logs encontrados:', logsSnapshot.size);
+                    
+                    if (logsSnapshot.empty) {
+                        logsList.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum log encontrado.</p>';
+                        return;
+                    }
+                    
+                    const logs = [];
+                    const now = new Date();
+                    const periodDays = periodValue === 'all' ? null : parseInt(periodValue);
+                    
+                    logsSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        const logDate = new Date(data.timestamp);
+                        
+                        // Filtrar por período
+                        if (periodDays) {
+                            const diffDays = (now - logDate) / (1000 * 60 * 60 * 24);
+                            if (diffDays > periodDays) {
+                                return;
+                            }
+                        }
+                        
+                        // Filtrar por ação (client-side)
+                        if (filterValue !== 'all' && data.action !== filterValue) {
+                            return;
+                        }
+                        
+                        logs.push({ id: doc.id, ...data });
+                    });
+                    
+                    if (logs.length === 0) {
+                        logsList.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum log encontrado no período selecionado.</p>';
+                        return;
+                    }
+                    
+                    // Renderizar logs
+                    const actionIcons = {
+                        'APPROVE_PENDING': '✅',
+                        'DENY_PENDING': '❌',
+                        'DELETE_ESCALA': '🗑️',
+                        'DELETE_BLOCKED_ATTEMPT': '🔓'
+                    };
+                    
+                    const actionLabels = {
+                        'APPROVE_PENDING': 'Aprovação',
+                        'DENY_PENDING': 'Negação',
+                        'DELETE_ESCALA': 'Exclusão',
+                        'DELETE_BLOCKED_ATTEMPT': 'Remoção de Bloqueio'
+                    };
+                    
+                    const teamNames = {
+                        welcome: 'Welcome',
+                        backstage: 'Backstage',
+                        parking: 'Parking',
+                        kids: 'Kids'
+                    };
+                    
+                    logsList.innerHTML = logs.map(log => {
+                        const logDate = new Date(log.timestamp);
+                        const formattedDate = logDate.toLocaleDateString('pt-BR', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        const icon = actionIcons[log.action] || '📋';
+                        const label = actionLabels[log.action] || log.action;
+                        
+                        let detailsHtml = '';
+                        if (log.action === 'APPROVE_PENDING') {
+                            const teamChanged = log.details.teamChanged ? 
+                                `<span class="text-orange-600 font-semibold">mudou ${teamNames[log.details.requestedTeam]} → ${teamNames[log.details.approvedTeam]}</span>` : 
+                                `manteve ${teamNames[log.details.approvedTeam]}`;
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamChanged}</p>
+                            `;
+                        } else if (log.action === 'DENY_PENDING') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time solicitado:</strong> ${teamNames[log.details.requestedTeam]}</p>
+                            `;
+                        } else if (log.action === 'DELETE_ESCALA') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Voluntário:</strong> ${log.details.volunteerName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamNames[log.details.team]}</p>
+                                <p class="text-sm"><strong>Status:</strong> ${log.details.status}</p>
+                            `;
+                        } else if (log.action === 'DELETE_BLOCKED_ATTEMPT') {
+                            detailsHtml = `
+                                <p class="text-sm"><strong>Usuário:</strong> ${log.details.userName}</p>
+                                <p class="text-sm"><strong>Evento:</strong> ${log.details.eventName || 'Sem nome'} - ${new Date(log.details.date).toLocaleDateString('pt-BR')} às ${log.details.time}</p>
+                                <p class="text-sm"><strong>Time:</strong> ${teamNames[log.details.team]}</p>
+                                <p class="text-sm"><strong>Motivo do bloqueio:</strong> ${log.details.reason}</p>
+                            `;
+                        }
+                        
+                        return `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-2xl">${icon}</span>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="font-bold text-gray-800">${label}</h3>
+                                            <span class="text-xs text-gray-500">${formattedDate}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2"><strong>Por:</strong> ${log.userName} (${log.userEmail})</p>
+                                        <div class="bg-gray-50 rounded p-2 text-gray-700">
+                                            ${detailsHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar logs:', error);
+                    document.getElementById('audit-logs-list').innerHTML = 
+                        `<p class="text-center text-red-500 py-8">❌ Erro ao carregar logs: ${error.message}</p>`;
+                }
+            }
+
             // Negar escala pendente
             async function denyPendingEscala(escalaId) {
                 showModal(
@@ -4132,15 +5489,30 @@
                     true,
                     async () => {
                         try {
-                            const { doc, updateDoc } = window.firestoreMethods;
+                            const { doc, updateDoc, getDoc } = window.firestoreMethods;
+                            
+                            // Buscar dados da escala
+                            const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
+                            const escalaDoc = await getDoc(escalaRef);
+                            const escalaData = escalaDoc.exists() ? escalaDoc.data() : {};
                             
                             // Atualizar status para denied
-                            const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
                             await updateDoc(escalaRef, {
                                 status: 'denied',
                                 deniedAt: new Date().toISOString(),
                                 deniedBy: currentUser.uid,
                                 deniedReason: 'Escala não aprovada pelo administrador'
+                            });
+                            
+                            // Registrar log de auditoria
+                            await logAudit('DENY_PENDING', {
+                                escalaId: escalaId,
+                                volunteerName: escalaData.userName || escalaData.userEmail,
+                                volunteerId: escalaData.userId,
+                                date: escalaData.date,
+                                time: escalaData.time,
+                                eventName: escalaData.eventName,
+                                requestedTeam: escalaData.team
                             });
                             
                             console.log('✅ Escala negada com sucesso!');
@@ -4184,8 +5556,26 @@
             // Deletar escala
             async function deleteEscala(escalaId) {
                 try {
-                    const { doc, deleteDoc } = window.firestoreMethods;
-                    await deleteDoc(doc(window.firebaseDb, 'escalas', escalaId));
+                    const { doc, deleteDoc, getDoc } = window.firestoreMethods;
+                    
+                    // Buscar dados da escala antes de deletar
+                    const escalaRef = doc(window.firebaseDb, 'escalas', escalaId);
+                    const escalaDoc = await getDoc(escalaRef);
+                    const escalaData = escalaDoc.exists() ? escalaDoc.data() : {};
+                    
+                    await deleteDoc(escalaRef);
+                    
+                    // Registrar log de auditoria
+                    await logAudit('DELETE_ESCALA', {
+                        escalaId: escalaId,
+                        volunteerName: escalaData.userName || escalaData.userEmail,
+                        volunteerId: escalaData.userId,
+                        date: escalaData.date,
+                        time: escalaData.time,
+                        eventName: escalaData.eventName,
+                        team: escalaData.team,
+                        status: escalaData.status
+                    });
                     
                     console.log('✅ Escala deletada com sucesso!');
                     showModal('Escala removida com sucesso!');
@@ -4208,16 +5598,26 @@
                     return;
                 }
                 
-                // Ordenar datas por data (ordem crescente)
+                // Ordenar datas por data (ordem crescente) COM MAPEAMENTO DE ÍNDICES
                 const sortedDates = [...availableDates].sort((a, b) => {
                     const dateA = a.value.split('|')[0];
                     const dateB = b.value.split('|')[0];
                     return dateA.localeCompare(dateB);
                 });
                 
-                const html = sortedDates.map((date) => {
-                    // Encontrar o índice real no array original
-                    const realIndex = availableDates.findIndex(d => d.value === date.value);
+                // CORREÇÃO: Criar mapa que conecta cada item ordenado ao seu índice original
+                const dateIndexMap = new Map();
+                sortedDates.forEach((sortedDate, sortedIndex) => {
+                    const originalIndex = availableDates.findIndex(d => 
+                        d.value === sortedDate.value && d.text === sortedDate.text
+                    );
+                    dateIndexMap.set(sortedIndex, originalIndex);
+                    console.log(`🔍 [DEBUG] sortedIndex: ${sortedIndex} → originalIndex: ${originalIndex} | Data: ${sortedDate.text}`);
+                });
+                
+                const html = sortedDates.map((date, sortedIndex) => {
+                    // Usar o mapa para obter o índice correto no array original
+                    const realIndex = dateIndexMap.get(sortedIndex);
                     return `
                         <div class="bg-white p-3 rounded border border-gray-200 space-y-2">
                             <!-- Linha 1: Descrição do evento -->
@@ -4227,10 +5627,10 @@
                             
                             <!-- Linha 2: Botões de ação -->
                             <div class="flex gap-2 pt-1">
-                                <button class="admin-edit-date flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded text-sm transition border border-blue-200" data-index="${realIndex}">
+                                <button class="admin-edit-date flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded text-sm transition border border-blue-200" data-index="${realIndex}" data-date="${date.text}">
                                     ✏️ Editar
                                 </button>
-                                <button class="admin-delete-date flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded text-sm transition border border-red-200" data-index="${realIndex}">
+                                <button class="admin-delete-date flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded text-sm transition border border-red-200" data-index="${realIndex}" data-date="${date.text}">
                                     🗑️ Remover
                                 </button>
                             </div>
@@ -4244,6 +5644,8 @@
                 document.querySelectorAll('.admin-edit-date').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const index = parseInt(e.currentTarget.dataset.index);
+                        const dateText = e.currentTarget.dataset.date;
+                        console.log(`📝 [DEBUG] Editando: ${dateText} com índice: ${index}`);
                         editDate(index);
                     });
                 });
@@ -4252,15 +5654,20 @@
                 document.querySelectorAll('.admin-delete-date').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const index = parseInt(e.currentTarget.dataset.index);
+                        const dateText = e.currentTarget.dataset.date;
                         const date = availableDates[index];
+                        console.log(`🗑️ [DEBUG] Deletando: ${dateText} com índice: ${index} | Confirmado: ${date.text}`);
                         showModal(
-                            `Tem certeza que deseja remover a data "${date.text}"? ATENÇÃO: Todas as escalas desta data serão deletadas permanentemente!`,
+                            `Tem certeza que deseja remover a data "<strong>${date.text}</strong>"?<br><br>⚠️ <span class="text-red-600 font-bold">ATENÇÃO: Todas as ${availableDates.length > 1 ? 'escalas' : 'escala'} desta data serão deletadas permanentemente!</span>`,
                             true,
                             () => deleteDate(index),
                             true
                         );
                     });
                 });
+                
+                // Carregar backups
+                loadBackups();
             }
 
             // Validar campos do formulário admin com feedback visual
@@ -4278,11 +5685,11 @@
                 } else {
                     const now = new Date();
                     const eventDateTime = new Date(dateInput.value + 'T' + (document.getElementById('admin-new-time').value || '00:00'));
-                    const oneHourFromNow = new Date(now.getTime() + (60 * 60 * 1000));
                     
-                    if (eventDateTime < oneHourFromNow) {
+                    // Permitir qualquer data/hora futura, bloqueando apenas passado
+                    if (eventDateTime < now) {
                         dateInput.classList.add('border-red-500');
-                        dateError.textContent = 'Data deve ser futura (mínimo 1 hora)';
+                        dateError.textContent = 'Data não pode ser no passado';
                         dateError.classList.remove('hidden');
                         isValid = false;
                     } else {
@@ -4320,6 +5727,583 @@
                 }
                 
                 return isValid;
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // ESCALA MANUAL DE VOLUNTÁRIOS (SUPER ADMIN)
+            // ═══════════════════════════════════════════════════════════════
+            
+            let manualScaleState = {
+                selectedVolunteer: null,
+                selectedEvent: null,
+                selectedTeam: null,
+                allVolunteers: [],
+                allEvents: []
+            };
+
+            // Inicializar painel de escala manual
+            async function initManualScalePanel() {
+                try {
+                    console.log('🚀 Inicializando painel de escala manual...');
+                    resetManualScalePanel();
+                    await loadVolunteersForManualScale();
+                    
+                    // Event listeners
+                    setupManualScaleListeners();
+                } catch (error) {
+                    console.error('❌ Erro ao inicializar painel:', error);
+                    showModal('❌ Erro ao carregar painel');
+                }
+            }
+
+            // Resetar estado do painel
+            function resetManualScalePanel() {
+                manualScaleState = {
+                    selectedVolunteer: null,
+                    selectedEvent: null,
+                    selectedTeam: null,
+                    allVolunteers: [],
+                    allEvents: []
+                };
+                
+                // Esconder seções
+                document.getElementById('manual-scale-step-1').classList.remove('hidden');
+                document.getElementById('manual-scale-step-2').classList.add('hidden');
+                document.getElementById('manual-scale-step-3').classList.add('hidden');
+                document.getElementById('manual-scale-back-to-volunteer').classList.add('hidden');
+                
+                // Limpar inputs
+                document.getElementById('manual-scale-volunteer-search').value = '';
+                document.getElementById('manual-scale-volunteer-search').focus();
+            }
+
+            // Carregar voluntários para escala manual
+            async function loadVolunteersForManualScale() {
+                try {
+                    console.log('📋 Carregando voluntários...');
+                    
+                    const { collection, getDocs } = window.firestoreMethods;
+                    const querySnapshot = await getDocs(collection(window.firebaseDb, 'users'));
+                    
+                    const volunteers = [];
+                    querySnapshot.forEach((doc) => {
+                        const userData = doc.data();
+                        if (userData.role !== 'superadmin' && userData.role !== 'admin') {
+                            volunteers.push({
+                                id: doc.id,
+                                name: userData.displayName || userData.email,
+                                email: userData.email,
+                                role: userData.role
+                            });
+                        }
+                    });
+                    
+                    // Ordenar por nome
+                    volunteers.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    manualScaleState.allVolunteers = volunteers;
+                    console.log('✅ Voluntários carregados:', volunteers.length);
+                    
+                    displayVolunteersForManualScale(volunteers);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar voluntários:', error);
+                    showModal('❌ Erro ao carregar voluntários');
+                }
+            }
+
+            // Exibir voluntários
+            function displayVolunteersForManualScale(volunteers) {
+                const list = document.getElementById('manual-scale-volunteers-list');
+                
+                if (volunteers.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum voluntário encontrado</p>';
+                    return;
+                }
+                
+                list.innerHTML = volunteers.map((volunteer) => `
+                    <button class="manual-scale-volunteer-btn w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition" data-volunteer-id="${volunteer.id}">
+                        <p class="font-semibold text-gray-800">${volunteer.name}</p>
+                        <p class="text-sm text-gray-600">${volunteer.email}</p>
+                    </button>
+                `).join('');
+                
+                // Event listeners
+                document.querySelectorAll('.manual-scale-volunteer-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const volunteerId = e.currentTarget.dataset.volunteerId;
+                        selectVolunteerForManualScale(volunteerId);
+                    });
+                });
+            }
+
+            // Selecionar voluntário
+            async function selectVolunteerForManualScale(volunteerId) {
+                try {
+                    const volunteer = manualScaleState.allVolunteers.find(v => v.id === volunteerId);
+                    
+                    console.log('👤 Voluntário selecionado:', volunteer.name);
+                    
+                    manualScaleState.selectedVolunteer = volunteer;
+                    manualScaleState.selectedEvent = null;
+                    manualScaleState.selectedTeam = null;
+                    
+                    // Mostrar step 2
+                    document.getElementById('manual-scale-step-1').classList.add('hidden');
+                    document.getElementById('manual-scale-step-2').classList.remove('hidden');
+                    document.getElementById('manual-scale-back-to-volunteer').classList.remove('hidden');
+                    document.getElementById('manual-scale-volunteer-name').textContent = volunteer.name;
+                    
+                    // Carregar eventos
+                    await loadEventsForManualScale();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao selecionar voluntário:', error);
+                }
+            }
+
+            // Carregar eventos
+            async function loadEventsForManualScale() {
+                try {
+                    console.log('📅 Carregando eventos...');
+                    
+                    const events = [];
+                    
+                    // Carregar datas disponíveis
+                    availableDates.forEach((date) => {
+                        const dateParts = date.value.split('|');
+                        events.push({
+                            value: dateParts[0],
+                            time: dateParts[1],
+                            text: date.text,
+                            eventName: dateParts.length > 2 ? dateParts[2] : ''
+                        });
+                    });
+                    
+                    manualScaleState.allEvents = events;
+                    console.log('✅ Eventos carregados:', events.length);
+                    
+                    displayEventsForManualScale(events);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar eventos:', error);
+                    showModal('❌ Erro ao carregar eventos');
+                }
+            }
+
+            // Exibir eventos
+            function displayEventsForManualScale(events) {
+                const list = document.getElementById('manual-scale-events-list');
+                
+                if (events.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum evento disponível</p>';
+                    return;
+                }
+                
+                list.innerHTML = events.map((event) => `
+                    <button class="manual-scale-event-btn w-full text-left p-4 rounded-lg border border-gray-200 hover:border-green-500 hover:bg-green-50 transition" data-event-value="${event.value}" data-event-time="${event.time}">
+                        <p class="font-semibold text-gray-800">${event.text}</p>
+                        <p class="text-sm text-gray-600">⏰ ${event.time}</p>
+                    </button>
+                `).join('');
+                
+                // Event listeners
+                document.querySelectorAll('.manual-scale-event-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const eventValue = e.currentTarget.dataset.eventValue;
+                        const eventTime = e.currentTarget.dataset.eventTime;
+                        selectEventForManualScale(eventValue, eventTime);
+                    });
+                });
+            }
+
+            // Selecionar evento
+            function selectEventForManualScale(eventDate, eventTime) {
+                try {
+                    const event = manualScaleState.allEvents.find(e => e.value === eventDate && e.time === eventTime);
+                    
+                    console.log('📅 Evento selecionado:', event.text);
+                    
+                    manualScaleState.selectedEvent = event;
+                    manualScaleState.selectedTeam = null;
+                    
+                    // Mostrar step 3
+                    document.getElementById('manual-scale-step-2').classList.add('hidden');
+                    document.getElementById('manual-scale-step-3').classList.remove('hidden');
+                    document.getElementById('manual-scale-event-name').textContent = event.text;
+                    
+                    // Carregar times
+                    loadTeamsForManualScale();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao selecionar evento:', error);
+                }
+            }
+
+            // Carregar times disponíveis
+            function loadTeamsForManualScale() {
+                const teamsList = document.getElementById('manual-scale-teams-list');
+                const teams = [
+                    { id: 'welcome', name: '👋 Welcome', emoji: '👋' },
+                    { id: 'backstage', name: '🎬 Backstage', emoji: '🎬' },
+                    { id: 'parking', name: '🚗 Parking', emoji: '🚗' },
+                    { id: 'kids', name: '👶 Kids', emoji: '👶' },
+                    { id: 'comunicacao', name: '📢 Comunicação', emoji: '📢' }
+                ];
+                
+                teamsList.innerHTML = teams.map((team) => `
+                    <button class="manual-scale-team-btn p-4 rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition text-center" data-team-id="${team.id}">
+                        <p class="text-3xl">${team.emoji}</p>
+                        <p class="font-semibold text-gray-800">${team.name}</p>
+                    </button>
+                `).join('');
+                
+                // Event listeners
+                document.querySelectorAll('.manual-scale-team-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        // Remover seleção anterior
+                        document.querySelectorAll('.manual-scale-team-btn').forEach(b => {
+                            b.classList.remove('border-purple-500', 'bg-purple-50');
+                            b.classList.add('border-gray-200');
+                        });
+                        
+                        // Adicionar seleção atual
+                        e.currentTarget.classList.remove('border-gray-200');
+                        e.currentTarget.classList.add('border-purple-500', 'bg-purple-50');
+                        
+                        const teamId = e.currentTarget.dataset.teamId;
+                        manualScaleState.selectedTeam = teamId;
+                        
+                        // Habilitar botão de confirmação
+                        document.getElementById('manual-scale-confirm-btn').disabled = false;
+                        console.log('✅ Time selecionado:', teamId);
+                    });
+                });
+            }
+
+            // Setup dos event listeners
+            function setupManualScaleListeners() {
+                // Buscar voluntários
+                const searchInput = document.getElementById('manual-scale-volunteer-search');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        const query = e.target.value.toLowerCase();
+                        const filtered = manualScaleState.allVolunteers.filter(v => 
+                            v.name.toLowerCase().includes(query) || v.email.toLowerCase().includes(query)
+                        );
+                        displayVolunteersForManualScale(filtered);
+                    });
+                }
+                
+                // Voltar de evento
+                const backToEventBtn = document.getElementById('manual-scale-back-to-event');
+                if (backToEventBtn) {
+                    backToEventBtn.addEventListener('click', () => {
+                        document.getElementById('manual-scale-step-3').classList.add('hidden');
+                        document.getElementById('manual-scale-step-2').classList.remove('hidden');
+                        manualScaleState.selectedTeam = null;
+                        document.getElementById('manual-scale-confirm-btn').disabled = true;
+                    });
+                }
+                
+                // Voltar de voluntário
+                const backToVolunteerBtn = document.getElementById('manual-scale-back-to-volunteer');
+                if (backToVolunteerBtn) {
+                    backToVolunteerBtn.addEventListener('click', () => {
+                        document.getElementById('manual-scale-step-2').classList.add('hidden');
+                        document.getElementById('manual-scale-step-1').classList.remove('hidden');
+                        document.getElementById('manual-scale-back-to-volunteer').classList.add('hidden');
+                        manualScaleState.selectedVolunteer = null;
+                        document.getElementById('manual-scale-volunteer-search').focus();
+                    });
+                }
+                
+                // Confirmar escala
+                const confirmBtn = document.getElementById('manual-scale-confirm-btn');
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', async () => {
+                        await confirmManualScale();
+                    });
+                }
+            }
+
+            // Confirmar e salvar escala
+            async function confirmManualScale() {
+                try {
+                    const { selectedVolunteer, selectedEvent, selectedTeam } = manualScaleState;
+                    
+                    if (!selectedVolunteer || !selectedEvent || !selectedTeam) {
+                        showModal('❌ Selecione voluntário, evento e time');
+                        return;
+                    }
+                    
+                    console.log('💾 Salvando escala manual...');
+                    console.log('  Voluntário:', selectedVolunteer.name);
+                    console.log('  Evento:', selectedEvent.text);
+                    console.log('  Time:', selectedTeam);
+                    
+                    const { doc, setDoc, Timestamp } = window.firestoreMethods;
+                    
+                    // Gerar ID da escala
+                    const escalaId = `${selectedVolunteer.id}_${selectedEvent.value}_${selectedTeam}`;
+                    
+                    // Converter data/hora para Timestamp
+                    const eventDateTime = new Date(`${selectedEvent.value}T${selectedEvent.time}:00`);
+                    
+                    // Criar documento da escala
+                    const escalaData = {
+                        userId: selectedVolunteer.id,
+                        userName: selectedVolunteer.name,
+                        userEmail: selectedVolunteer.email,
+                        date: selectedEvent.value,
+                        time: selectedEvent.time,
+                        team: selectedTeam,
+                        eventName: selectedEvent.eventName || '',
+                        status: 'approved', // Escala manual é automaticamente aprovada
+                        createdAt: new Date().toISOString(),
+                        createdByAdmin: currentUser.uid,
+                        createdByAdminEmail: currentUser.email,
+                        createdByAdminName: currentUser.displayName,
+                        isManualScale: true, // Flag para indicar que é escala manual
+                        eventTimestamp: Timestamp.fromDate(eventDateTime)
+                    };
+                    
+                    // Salvar escala
+                    await setDoc(doc(window.firebaseDb, 'escalas', escalaId), escalaData);
+                    console.log('✅ Escala salva com sucesso!');
+                    
+                    // Log de auditoria
+                    await logAudit('MANUAL_SCALE', {
+                        volunteerName: selectedVolunteer.name,
+                        volunteerId: selectedVolunteer.id,
+                        event: selectedEvent.text,
+                        eventDate: selectedEvent.value,
+                        team: selectedTeam,
+                        createdBy: currentUser.displayName
+                    });
+                    
+                    showModal(`✅ Escala criada com sucesso!<br><br>Voluntário: <strong>${selectedVolunteer.name}</strong><br>Evento: <strong>${selectedEvent.text}</strong><br>Time: <strong>${selectedTeam}</strong>`);
+                    
+                    // Recarregar dados
+                    await loadUserEscalas();
+                    await loadAllEscalas();
+                    
+                    // Resetar e voltar
+                    resetManualScalePanel();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar escala:', error);
+                    showModal('❌ Erro ao criar escala: ' + error.message);
+                }
+            }
+
+            // Carregar backups de escalas deletadas
+            async function loadBackups() {
+                try {
+                    const backupsList = document.getElementById('admin-backups-list');
+                    if (!backupsList) return;
+                    
+                    const { collection, getDocs } = window.firestoreMethods;
+                    const querySnapshot = await getDocs(collection(window.firebaseDb, 'escalas_backups'));
+                    
+                    if (querySnapshot.empty) {
+                        backupsList.innerHTML = '<p class="text-gray-500 text-sm">Nenhum backup disponível.</p>';
+                        return;
+                    }
+                    
+                    const backups = [];
+                    querySnapshot.forEach((doc) => {
+                        backups.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordenar por data de deleção (mais recentes primeiro)
+                    backups.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+                    
+                    const html = backups.map((backup) => {
+                        const deletedDate = new Date(backup.deletedAt);
+                        const dateStr = deletedDate.toLocaleString('pt-BR');
+                        
+                        return `
+                            <div class="bg-white p-4 rounded border-l-4 border-blue-500 space-y-3">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-bold text-blue-900">${backup.eventName || backup.dateDeleted}</h4>
+                                        <p class="text-sm text-gray-600">
+                                            📅 Deletado em: ${dateStr}
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            👤 Por: ${backup.deletedByName || backup.deletedByEmail}
+                                        </p>
+                                        <p class="text-sm font-medium text-blue-700">
+                                            📊 ${backup.escalasCount} escala(s) no backup
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="backup-view-btn flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded text-sm transition border border-blue-200" data-backup-id="${backup.id}">
+                                        👁️ Visualizar
+                                    </button>
+                                    <button class="backup-restore-btn flex-1 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded text-sm transition border border-green-200" data-backup-id="${backup.id}">
+                                        ↩️ Restaurar
+                                    </button>
+                                    <button class="backup-delete-btn flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded text-sm transition border border-red-200" data-backup-id="${backup.id}">
+                                        🗑️ Deletar
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    backupsList.innerHTML = html;
+                    
+                    // Event listeners
+                    document.querySelectorAll('.backup-view-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const backupId = e.currentTarget.dataset.backupId;
+                            viewBackup(backupId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.backup-restore-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const backupId = e.currentTarget.dataset.backupId;
+                            const backup = backups.find(b => b.id === backupId);
+                            showModal(
+                                `⚠️ Tem certeza que deseja <strong>restaurar</strong> o backup de <strong>${backup.eventName || backup.dateDeleted}</strong>?<br><br>Serão restauradas <strong>${backup.escalasCount} escala(s)</strong>.`,
+                                true,
+                                () => restoreBackup(backupId),
+                                true
+                            );
+                        });
+                    });
+                    
+                    document.querySelectorAll('.backup-delete-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const backupId = e.currentTarget.dataset.backupId;
+                            const backup = backups.find(b => b.id === backupId);
+                            showModal(
+                                `Tem certeza que deseja <strong>deletar permanentemente</strong> este backup?<br><br>Evento: ${backup.eventName || backup.dateDeleted}`,
+                                true,
+                                () => deleteBackup(backupId),
+                                true
+                            );
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar backups:', error);
+                }
+            }
+
+            // Visualizar escalas no backup
+            async function viewBackup(backupId) {
+                try {
+                    const { doc, getDoc } = window.firestoreMethods;
+                    const backupDoc = await getDoc(doc(window.firebaseDb, 'escalas_backups', backupId));
+                    
+                    if (!backupDoc.exists()) {
+                        showModal('❌ Backup não encontrado');
+                        return;
+                    }
+                    
+                    const backup = backupDoc.data();
+                    let escalasHtml = '';
+                    
+                    backup.escalas.forEach((escala) => {
+                        escalasHtml += `
+                            <div class="text-left border-b border-gray-200 pb-2 mb-2">
+                                <p><strong>${escala.userName || escala.userEmail}</strong></p>
+                                <p class="text-sm text-gray-600">
+                                    Time: <strong>${escala.team}</strong> | 
+                                    Horário: <strong>${escala.time}</strong> | 
+                                    Status: <strong>${escala.status || 'Aprovado'}</strong>
+                                </p>
+                            </div>
+                        `;
+                    });
+                    
+                    showModal(`
+                        <div class="text-left max-h-96 overflow-y-auto">
+                            <h3 class="font-bold mb-3">${backup.eventName || backup.dateDeleted}</h3>
+                            <p class="text-sm text-gray-600 mb-4">Total: <strong>${backup.escalasCount} escala(s)</strong></p>
+                            ${escalasHtml || '<p class="text-gray-500">Nenhuma escala neste backup</p>'}
+                        </div>
+                    `, false);
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao visualizar backup:', error);
+                    showModal('❌ Erro ao visualizar backup');
+                }
+            }
+
+            // Restaurar escalas do backup
+            async function restoreBackup(backupId) {
+                try {
+                    console.log('🔄 [RESTORE] Iniciando restauração do backup:', backupId);
+                    
+                    const { doc, getDoc, setDoc, collection } = window.firestoreMethods;
+                    const backupDoc = await getDoc(doc(window.firebaseDb, 'escalas_backups', backupId));
+                    
+                    if (!backupDoc.exists()) {
+                        throw new Error('Backup não encontrado');
+                    }
+                    
+                    const backup = backupDoc.data();
+                    console.log('💾 Backup encontrado com', backup.escalasCount, 'escalas');
+                    
+                    // Restaurar cada escala
+                    let restauradas = 0;
+                    for (const escala of backup.escalas) {
+                        try {
+                            const escalaRef = doc(window.firebaseDb, 'escalas', escala.id);
+                            await setDoc(escalaRef, {
+                                ...escala,
+                                restoredFrom: backupId,
+                                restoredAt: new Date().toISOString()
+                            });
+                            restauradas++;
+                            console.log(`  ✅ Escala restaurada: ${escala.userName || escala.userEmail}`);
+                        } catch (e) {
+                            console.error(`  ❌ Erro ao restaurar escala ${escala.id}:`, e);
+                        }
+                    }
+                    
+                    console.log('✅ [RESTORE] Restauração concluída:', restauradas, '/', backup.escalasCount);
+                    
+                    // Log de auditoria
+                    await logAudit('RESTORE_BACKUP', {
+                        backupId: backupId,
+                        eventName: backup.eventName,
+                        escalasRestored: restauradas
+                    });
+                    
+                    showModal(`✅ Backup restaurado com sucesso!<br><br>${restauradas} de ${backup.escalasCount} escala(s) foram restauradas.`);
+                    
+                    // Recarregar dados
+                    await loadUserEscalas();
+                    await loadAllEscalas();
+                    await loadBackups();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao restaurar backup:', error);
+                    showModal('❌ Erro ao restaurar backup: ' + error.message);
+                }
+            }
+
+            // Deletar backup permanentemente
+            async function deleteBackup(backupId) {
+                try {
+                    console.log('🗑️ Deletando backup:', backupId);
+                    
+                    const { doc, deleteDoc } = window.firestoreMethods;
+                    await deleteDoc(doc(window.firebaseDb, 'escalas_backups', backupId));
+                    
+                    console.log('✅ Backup deletado');
+                    showModal('✅ Backup deletado com sucesso');
+                    await loadBackups();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao deletar backup:', error);
+                    showModal('❌ Erro ao deletar backup');
+                }
             }
             
             // Limpar erros de validação ao digitar
@@ -4637,16 +6621,26 @@
                 }
             }
 
-            // Deletar data (apenas admin)
+            // Deletar data (apenas admin) COM BACKUP
             async function deleteDate(index) {
                 try {
+                    console.log('🗑️ [INICIANDO DELEÇÃO] Índice recebido:', index);
+                    console.log('🗑️ Total de datas disponíveis:', availableDates.length);
+                    console.log('🗑️ Array completo:', availableDates);
+                    
+                    if (index < 0 || index >= availableDates.length) {
+                        throw new Error(`Índice inválido: ${index}. Total de datas: ${availableDates.length}`);
+                    }
+                    
                     const dateToDelete = availableDates[index];
                     const dateValue = dateToDelete.value.split('|')[0]; // Extrair apenas a data (YYYY-MM-DD)
                     
+                    console.log('🗑️ Data a deletar:', dateToDelete.text);
+                    console.log('🗑️ Valor da data (YYYY-MM-DD):', dateValue);
                     console.log('🗑️ Deletando data:', dateValue);
                     
-                    // 1. Buscar e deletar todas as escalas desta data
-                    const { collection, query, where, getDocs, deleteDoc, doc, setDoc } = window.firestoreMethods;
+                    // 1. Buscar todas as escalas desta data
+                    const { collection, query, where, getDocs, deleteDoc, doc, setDoc, addDoc } = window.firestoreMethods;
                     const q = query(
                         collection(window.firebaseDb, 'escalas'),
                         where('date', '==', dateValue)
@@ -4655,29 +6649,85 @@
                     const querySnapshot = await getDocs(q);
                     console.log('📋 Escalas encontradas para deletar:', querySnapshot.size);
                     
-                    // Deletar todas as escalas desta data
+                    if (querySnapshot.size > 0) {
+                        console.log('⚠️ CUIDADO: Deletando', querySnapshot.size, 'escalas da data', dateValue);
+                    }
+                    
+                    // 2. CRIAR BACKUP antes de deletar
+                    console.log('💾 [BACKUP] Iniciando backup das escalas...');
+                    const escalasBackup = [];
+                    
+                    querySnapshot.forEach((docSnapshot) => {
+                        const escalaData = docSnapshot.data();
+                        escalasBackup.push({
+                            id: docSnapshot.id,
+                            ...escalaData
+                        });
+                    });
+                    
+                    if (escalasBackup.length > 0) {
+                        try {
+                            // Salvar backup em coleção separada
+                            const backupId = `backup_${dateValue}_${Date.now()}`;
+                            await setDoc(doc(window.firebaseDb, 'escalas_backups', backupId), {
+                                backupId: backupId,
+                                dateDeleted: dateValue,
+                                eventName: dateToDelete.text,
+                                deletedBy: currentUser.uid,
+                                deletedByEmail: currentUser.email,
+                                deletedByName: currentUser.displayName,
+                                deletedAt: new Date().toISOString(),
+                                escalasCount: escalasBackup.length,
+                                escalas: escalasBackup
+                            });
+                            console.log('✅ [BACKUP] Backup salvo com sucesso! ID:', backupId);
+                            
+                            // Log de auditoria
+                            await logAudit('DELETE_DATE_WITH_BACKUP', {
+                                dateValue: dateValue,
+                                eventName: dateToDelete.text,
+                                escalasCount: escalasBackup.length,
+                                backupId: backupId
+                            });
+                        } catch (backupError) {
+                            console.error('⚠️ [BACKUP] Erro ao salvar backup (mas continuando):', backupError);
+                        }
+                    }
+                    
+                    // 3. Deletar todas as escalas desta data
                     const deletePromises = [];
                     querySnapshot.forEach((docSnapshot) => {
+                        const escalaData = docSnapshot.data();
+                        console.log('  → Deletando escala:', {
+                            id: docSnapshot.id,
+                            volunteer: escalaData.userName || escalaData.userEmail,
+                            date: escalaData.date,
+                            time: escalaData.time,
+                            team: escalaData.team
+                        });
                         deletePromises.push(deleteDoc(doc(window.firebaseDb, 'escalas', docSnapshot.id)));
                     });
                     
                     await Promise.all(deletePromises);
-                    console.log('✅ Escalas deletadas');
+                    console.log('✅ Escalas deletadas com sucesso');
                     
-                    // 2. Remover data da lista
+                    // 4. Remover data da lista
                     availableDates.splice(index, 1);
+                    console.log('✅ Data removida do array local. Novo total:', availableDates.length);
                     
-                    // 3. Salvar no Firestore
+                    // 5. Salvar no Firestore
                     await setDoc(doc(window.firebaseDb, 'config', 'availableDates'), { dates: availableDates });
+                    console.log('✅ Lista de datas atualizada no Firestore');
                     
-                    showModal(`Data removida com sucesso! ${querySnapshot.size} escala(s) foram deletada(s).`);
+                    showModal(`✅ Data removida com sucesso!<br><br>${querySnapshot.size} escala(s) foram deletada(s).<br><br>💾 Um backup foi criado e pode ser restaurado se necessário.`);
                     renderAdminDatesList();
                     await loadUserEscalas(); // Atualizar dropdown
                     await loadAllEscalas(); // Atualizar visão geral
                     
                 } catch (error) {
                     console.error('❌ Erro ao deletar data:', error);
-                    showModal('Erro ao remover data. Tente novamente.');
+                    console.error('❌ Stack:', error.stack);
+                    showModal('❌ Erro ao remover data. Tente novamente.<br><br>Erro: ' + error.message);
                 }
             }
 
@@ -4909,8 +6959,20 @@
                     }
                     
                     console.log('📅 Período:', dateFrom.toLocaleDateString(), 'até', dateTo.toLocaleDateString());
-                    console.log('📅 dateFrom ISO:', dateFrom.toISOString().split('T')[0]);
-                    console.log('📅 dateTo ISO:', dateTo.toISOString().split('T')[0]);
+                    
+                    // Converter para formato YYYY-MM-DD usando data local (não UTC)
+                    const formatDateLocal = (date) => {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    };
+                    
+                    const dateFromStr = formatDateLocal(dateFrom);
+                    const dateToStr = formatDateLocal(dateTo);
+                    
+                    console.log('📅 dateFromStr:', dateFromStr);
+                    console.log('📅 dateToStr:', dateToStr);
                     
                     // Buscar todas as escalas no período
                     const { collection, getDocs } = window.firestoreMethods;
@@ -4921,8 +6983,6 @@
                     console.log('📊 Total de documentos no Firestore:', querySnapshot.size);
                     
                     const escalas = [];
-                    const dateFromStr = dateFrom.toISOString().split('T')[0];
-                    const dateToStr = dateTo.toISOString().split('T')[0];
                     
                     console.log('📊 Filtrando escalas entre:', dateFromStr, 'e', dateToStr);
                     
@@ -4941,6 +7001,9 @@
                     
                     // Armazenar escalas globalmente para atualização do gráfico
                     window.currentDashboardEscalas = escalas;
+                    
+                    // Atualizar estatísticas de voluntários
+                    await getVolunteerStats(escalas);
                     
                     // Gerar dados dos gráficos
                     await generateChart1_TeamParticipation(escalas);
@@ -5023,18 +7086,18 @@
                             label: 'Voluntários Únicos',
                             data: [teamCount.welcome, teamCount.backstage, teamCount.parking, teamCount.kids, teamCount.comunicacao],
                             backgroundColor: [
-                                'rgba(55, 125, 184, 0.7)', // Azul Welcome
-                                'rgba(128, 128, 128, 0.7)', // Cinza Backstage
-                                'rgba(248, 113, 113, 0.7)', // Vermelho Parking
-                                'rgba(251, 191, 36, 0.7)',  // Amarelo Kids
-                                'rgba(147, 51, 234, 0.7)'   // Roxo Comunicação
+                                'rgba(254, 243, 199, 0.7)',  // Amarelo claro (1º)
+                                'rgba(245, 208, 71, 0.7)',   // Amarelo mais escuro (2º)
+                                'rgba(254, 180, 123, 0.7)',  // Laranja claro (3º)
+                                'rgba(251, 146, 60, 0.7)',   // Laranja escuro (4º)
+                                'rgba(239, 68, 68, 0.7)'     // Vermelho (5º)
                             ],
                             borderColor: [
-                                'rgba(55, 125, 184, 1)',
-                                'rgba(128, 128, 128, 1)',
-                                'rgba(248, 113, 113, 1)',
-                                'rgba(251, 191, 36, 1)',
-                                'rgba(147, 51, 234, 1)'
+                                'rgba(254, 243, 199, 1)',    // Amarelo claro (1º)
+                                'rgba(245, 208, 71, 1)',     // Amarelo mais escuro (2º)
+                                'rgba(254, 180, 123, 1)',    // Laranja claro (3º)
+                                'rgba(251, 146, 60, 1)',     // Laranja escuro (4º)
+                                'rgba(239, 68, 68, 1)'       // Vermelho (5º)
                             ],
                             borderWidth: 2
                         }]
@@ -5044,14 +7107,24 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                display: false
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 12 },
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
+                                suggestedMax: 6,
                                 ticks: {
-                                    stepSize: 1
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        return Number.isInteger(value) ? value : '';
+                                    }
                                 }
                             }
                         },
@@ -5233,7 +7306,11 @@
                     eventCount[eventKey]++;
                     
                     // Adicionar voluntário ao time correspondente
-                    const team = escala.team?.toLowerCase();
+                    let team = escala.team?.toLowerCase();
+                    // Normalizar variações de comunicação
+                    if (team === 'comunicação' || team === 'comunicacao') {
+                        team = 'comunicacao';
+                    }
                     if (eventDetails[eventKey].teams[team]) {
                         eventDetails[eventKey].teams[team].push({
                             name: escala.userName || 'Desconhecido',
@@ -5449,9 +7526,12 @@
                                 },
                                 y: {
                                     beginAtZero: true,
-                                    max: 4,
+                                    suggestedMax: 5,
                                     ticks: {
-                                        stepSize: 1
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return Number.isInteger(value) ? value : '';
+                                        }
                                     }
                                 }
                             },
@@ -7134,7 +9214,7 @@
                     const userDocRef = doc(window.firebaseDb, 'users', currentUser.uid);
 
                     // Sanitizar e validar dados
-                    const allowedTeams = ['welcome','backstage','parking','kids','comunicacao'];
+                    const allowedTeams = ['welcome','backstage','parking','kids','comunicacao','no-preference'];
                     if (!allowedTeams.includes(onboardingData.preferredTeam)) {
                         showModal('⚠️ Selecione um time válido antes de salvar.');
                         return;
@@ -7307,7 +9387,6 @@
 
             // Event Listeners
             elements.googleLoginBtn.addEventListener('click', loginWithGoogle);
-            elements.saveEscalaBtn.addEventListener('click', saveEscala);
 
             // Event listeners para login com email
             const emailLoginModal = document.getElementById('email-login-modal');
@@ -7646,12 +9725,12 @@
 
             // Listeners do modal
             document.getElementById('menu-edit-onboarding-btn')?.addEventListener('click', async () => {
-                document.getElementById('menu-overlay').classList.add('hidden');
+                closeMenu();
                 await loadAndEditOnboarding();
             });
 
             document.getElementById('menu-block-dates-btn')?.addEventListener('click', () => {
-                document.getElementById('menu-overlay').classList.add('hidden');
+                closeMenu();
                 openBlockedDatesModal();
             });
             document.getElementById('close-blocked-dates-modal')?.addEventListener('click', closeBlockedDatesModal);
@@ -7664,7 +9743,7 @@
             });
 
             // ===== CHECK-IN DE VOLUNTÁRIOS =====
-            let currentCheckinEvent = null;
+            let currentCheckinEvents = []; // Agora é um array
 
             async function checkForCheckinEvents() {
                 // Só executar para líderes de time
@@ -7677,9 +9756,9 @@
                     const { collection, query, where, getDocs } = window.firestoreMethods;
                     const now = new Date();
                     const twoHoursBefore = new Date(now.getTime() - (2 * 60 * 60 * 1000));
-                    const threeHoursAfter = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+                    const twoHoursAfter = new Date(now.getTime() + (2 * 60 * 60 * 1000));
 
-                    console.log('🔍 Check-in: Buscando eventos entre', twoHoursBefore, 'e', threeHoursAfter);
+                    console.log('🔍 Check-in: Buscando eventos entre', twoHoursBefore, 'e', twoHoursAfter);
 
                     // Buscar escalas dos times que lidera
                     const escalasRef = collection(window.firebaseDb, 'escalas');
@@ -7691,11 +9770,11 @@
                         const escala = { id: doc.id, ...doc.data() };
                         const eventDateTime = new Date(escala.date + 'T' + escala.time);
                         
-                        // Verificar se está na janela: 2h antes até 3h depois
+                        // Verificar se está na janela: 2h antes até 2h depois
                         const twoHoursBeforeEvent = new Date(eventDateTime.getTime() - (2 * 60 * 60 * 1000));
-                        const threeHoursAfterEvent = new Date(eventDateTime.getTime() + (3 * 60 * 60 * 1000));
+                        const twoHoursAfterEvent = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000));
 
-                        if (now >= twoHoursBeforeEvent && now <= threeHoursAfterEvent) {
+                        if (now >= twoHoursBeforeEvent && now <= twoHoursAfterEvent) {
                             eventsInWindow.push({ ...escala, eventDateTime });
                         }
                     });
@@ -7722,16 +9801,15 @@
                             groupedByEvent[key].teams[escala.team].push(escala);
                         });
 
-                        // Pegar o evento mais recente (que já começou ou está mais próximo de agora)
+                        // Ordenar eventos por data/hora
                         const sortedEvents = Object.entries(groupedByEvent).sort((a, b) => {
-                            return b[1].eventDateTime - a[1].eventDateTime; // Mais recente primeiro
+                            return a[1].eventDateTime - b[1].eventDateTime; // Mais antigo primeiro
                         });
                         
-                        // Pegar o evento que já começou, ou o mais próximo
-                        const eventToShow = sortedEvents.find(([key, event]) => event.eventDateTime <= now) || sortedEvents[0];
-                        currentCheckinEvent = eventToShow[1];
+                        // Armazenar todos os eventos (não apenas um)
+                        currentCheckinEvents = sortedEvents.map(entry => entry[1]);
                         
-                        console.log('🎯 Check-in: Evento selecionado:', currentCheckinEvent.date, currentCheckinEvent.time, currentCheckinEvent.eventName);
+                        console.log('🎯 Check-in: Eventos selecionados:', currentCheckinEvents.map(e => `${e.date}_${e.time}`).join(', '));
                         
                         openCheckinModal();
                     }
@@ -7741,75 +9819,88 @@
             }
 
             function openCheckinModal() {
-                if (!currentCheckinEvent) return;
+                if (!currentCheckinEvents || currentCheckinEvents.length === 0) return;
 
                 const modal = document.getElementById('checkin-modal');
                 const eventInfo = document.getElementById('checkin-event-info');
                 const teamsList = document.getElementById('checkin-teams-list');
 
-                // Info do evento
-                const dateObj = new Date(currentCheckinEvent.date + 'T' + currentCheckinEvent.time);
-                const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-                const eventNameDisplay = currentCheckinEvent.eventName ? ` - ${currentCheckinEvent.eventName}` : '';
-                eventInfo.innerHTML = `
-                    <div class="font-semibold">Evento: ${dateStr}${eventNameDisplay}</div>
-                    <div class="text-xs text-gray-600">Horário: ${currentCheckinEvent.time}</div>
-                `;
-
-                // Listar times e voluntários
-                const teamNames = {
-                    welcome: { name: 'Welcome', icon: '👋', color: 'bg-blue-50 border-blue-200' },
-                    backstage: { name: 'Backstage', icon: '🤝', color: 'bg-gray-50 border-gray-200' },
-                    parking: { name: 'Parking', icon: '🚗', color: 'bg-red-50 border-red-200' },
-                    kids: { name: 'Kids', icon: '👶', color: 'bg-yellow-50 border-yellow-200' },
-                    comunicacao: { name: 'Comunicação', icon: '📢', color: 'bg-purple-50 border-purple-200' }
-                };
-
-                let html = '';
-                Object.entries(currentCheckinEvent.teams).forEach(([teamKey, volunteers]) => {
-                    const teamInfo = teamNames[teamKey] || { name: teamKey, icon: '👥', color: 'bg-gray-50' };
-                    html += `
-                        <div class="border-l-4 ${teamInfo.color} border rounded p-3">
-                            <h4 class="font-semibold mb-2 flex items-center gap-2">
-                                <span>${teamInfo.icon}</span>
-                                <span>${teamInfo.name}</span>
-                                <span class="text-xs text-gray-500">(${volunteers.length})</span>
-                            </h4>
-                            <div class="space-y-2">
-                                ${volunteers.map(v => {
-                                    const checkInStatus = v.checkIn?.status || 'pending';
-                                    const photoUrl = v.userPhoto || 'Zele logo.png';
-                                    return `
-                                        <div class="flex items-center justify-between bg-white p-2 rounded border">
-                                            <div class="flex items-center gap-2">
-                                                <img src="${photoUrl}" alt="${v.userName}" class="w-8 h-8 rounded-full object-cover" onerror="this.src='Zele logo.png'">
-                                                <span class="font-medium text-sm">${v.userName}</span>
-                                                ${checkInStatus === 'present' ? '<span class="text-xs text-green-600 font-semibold">✓ Presente</span>' : ''}
-                                                ${checkInStatus === 'absent' ? '<span class="text-xs text-red-600 font-semibold">✗ Ausente</span>' : ''}
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <button class="checkin-present-btn w-10 h-10 flex items-center justify-center rounded ${checkInStatus === 'present' ? 'bg-green-500 text-white' : 'bg-green-50 text-green-600 border border-green-200'} hover:bg-green-600 hover:text-white transition"
-                                                        data-escala-id="${v.id}"
-                                                        data-volunteer-name="${v.userName}"
-                                                        title="Marcar ${v.userName} como presente">
-                                                    ✓
-                                                </button>
-                                                <button class="checkin-absent-btn w-10 h-10 flex items-center justify-center rounded ${checkInStatus === 'absent' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-600 border border-red-200'} hover:bg-red-600 hover:text-white transition"
-                                                        data-escala-id="${v.id}"
-                                                        data-volunteer-name="${v.userName}"
-                                                        title="Marcar ${v.userName} como ausente">
-                                                    ✗
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
+                // Renderizar todos os eventos em seções
+                let eventsHtml = '';
+                
+                currentCheckinEvents.forEach((event, eventIndex) => {
+                    const dateObj = new Date(event.date + 'T' + event.time);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const eventNameDisplay = event.eventName ? ` - ${event.eventName}` : '';
+                    
+                    eventsHtml += `
+                        <div class="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded text-sm mb-4">
+                                <div class="font-semibold">📅 ${dateStr}${eventNameDisplay}</div>
+                                <div class="text-xs text-gray-600">🕐 ${event.time}</div>
                             </div>
-                        </div>
                     `;
+
+                    // Listar times e voluntários
+                    const teamNames = {
+                        welcome: { name: 'Welcome', icon: '👋', color: 'bg-blue-50 border-blue-200' },
+                        backstage: { name: 'Backstage', icon: '🤝', color: 'bg-gray-50 border-gray-200' },
+                        parking: { name: 'Parking', icon: '🚗', color: 'bg-red-50 border-red-200' },
+                        kids: { name: 'Kids', icon: '👶', color: 'bg-yellow-50 border-yellow-200' },
+                        comunicacao: { name: 'Comunicação', icon: '📢', color: 'bg-purple-50 border-purple-200' }
+                    };
+
+                    Object.entries(event.teams).forEach(([teamKey, volunteers]) => {
+                        const teamInfo = teamNames[teamKey] || { name: teamKey, icon: '👥', color: 'bg-gray-50' };
+                        eventsHtml += `
+                            <div class="border-l-4 ${teamInfo.color} border rounded p-3 mb-3">
+                                <h4 class="font-semibold mb-2 flex items-center gap-2">
+                                    <span>${teamInfo.icon}</span>
+                                    <span>${teamInfo.name}</span>
+                                    <span class="text-xs text-gray-500">(${volunteers.length})</span>
+                                </h4>
+                                <div class="space-y-2">
+                                    ${volunteers.map(v => {
+                                        const checkInStatus = v.checkIn?.status || 'pending';
+                                        const photoUrl = v.userPhoto || 'Zele logo.png';
+                                        return `
+                                            <div class="flex items-center justify-between bg-white p-2 rounded border">
+                                                <div class="flex items-center gap-2">
+                                                    <img src="${photoUrl}" alt="${v.userName}" class="w-8 h-8 rounded-full object-cover" onerror="this.src='Zele logo.png'">
+                                                    <span class="font-medium text-sm">${v.userName}</span>
+                                                    ${checkInStatus === 'present' ? '<span class="text-xs text-green-600 font-semibold">✓ Presente</span>' : ''}
+                                                    ${checkInStatus === 'absent' ? '<span class="text-xs text-red-600 font-semibold">✗ Ausente</span>' : ''}
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <button class="checkin-present-btn w-10 h-10 flex items-center justify-center rounded ${checkInStatus === 'present' ? 'bg-green-500 text-white' : 'bg-green-50 text-green-600 border border-green-200'} hover:bg-green-600 hover:text-white transition"
+                                                            data-escala-id="${v.id}"
+                                                            data-volunteer-name="${v.userName}"
+                                                            title="Marcar ${v.userName} como presente">
+                                                        ✓
+                                                    </button>
+                                                    <button class="checkin-absent-btn w-10 h-10 flex items-center justify-center rounded ${checkInStatus === 'absent' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-600 border border-red-200'} hover:bg-red-600 hover:text-white transition"
+                                                            data-escala-id="${v.id}"
+                                                            data-volunteer-name="${v.userName}"
+                                                            title="Marcar ${v.userName} como ausente">
+                                                        ✗
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    eventsHtml += `</div>`; // Fechar seção do evento
                 });
 
-                teamsList.innerHTML = html;
+                // Atualizar header
+                eventInfo.innerHTML = `<div class="font-semibold">✅ Check-in de Voluntários (${currentCheckinEvents.length} evento${currentCheckinEvents.length > 1 ? 's' : ''})</div>`;
+
+                // Inserir conteúdo dos eventos
+                teamsList.innerHTML = eventsHtml;
 
                 // Event listeners para os botões
                 document.querySelectorAll('.checkin-present-btn').forEach(btn => {
@@ -7854,32 +9945,27 @@
 
                     console.log(`✅ Check-in registrado: ${escalaId} = ${status}`);
                     
-                    // Atualizar visualmente os botões - resetar ambos primeiro
-                    const allButtons = document.querySelectorAll(`[data-escala-id="${escalaId}"]`);
+                    // Atualizar visualmente os botões
+                    const presentBtn = document.querySelector(`.checkin-present-btn[data-escala-id="${escalaId}"]`);
+                    const absentBtn = document.querySelector(`.checkin-absent-btn[data-escala-id="${escalaId}"]`);
                     
-                    // Resetar todos os botões dessa escala
-                    allButtons.forEach(btn => {
-                        btn.classList.remove('bg-green-100', 'border-2', 'border-green-600', 'bg-red-100', 'border-red-600');
-                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
-                        btn.disabled = false;
-                    });
-                    
-                    // Aplicar estilo apenas ao botão correspondente ao status
-                    allButtons.forEach(btn => {
-                        const btnText = btn.textContent.toLowerCase();
+                    if (presentBtn && absentBtn) {
+                        // Resetar ambos os botões
+                        presentBtn.classList.remove('bg-green-500', 'text-white');
+                        presentBtn.classList.add('bg-green-50', 'text-green-600', 'border', 'border-green-200');
                         
-                        if (status === 'present' && btnText.includes('presente')) {
-                            btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-                            btn.classList.add('bg-green-100', 'border-2', 'border-green-600');
-                            btn.innerHTML = '✅ Presente';
-                            btn.disabled = true;
-                        } else if (status === 'absent' && btnText.includes('ausente')) {
-                            btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-                            btn.classList.add('bg-red-100', 'border-2', 'border-red-600');
-                            btn.innerHTML = '❌ Ausente';
-                            btn.disabled = true;
+                        absentBtn.classList.remove('bg-red-500', 'text-white');
+                        absentBtn.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-200');
+                        
+                        // Aplicar estilo ao botão selecionado
+                        if (status === 'present') {
+                            presentBtn.classList.remove('bg-green-50', 'text-green-600', 'border', 'border-green-200');
+                            presentBtn.classList.add('bg-green-500', 'text-white');
+                        } else if (status === 'absent') {
+                            absentBtn.classList.remove('bg-red-50', 'text-red-600', 'border', 'border-red-200');
+                            absentBtn.classList.add('bg-red-500', 'text-white');
                         }
-                    });
+                    }
                 } catch (error) {
                     console.error('❌ Erro ao registrar check-in:', error);
                     showModal('Erro ao registrar presença. Tente novamente.');
@@ -7911,11 +9997,12 @@
                     await checkForCheckinEvents();
                     loadingDiv.remove();
                     
-                    if (!currentCheckinEvent) {
-                        showModal('⏰ Não há eventos disponíveis para check-in no momento.<br><br>O check-in fica disponível 1h antes até 1:30h após o evento.', false, null, false, null, '⏰');
+                    if (!currentCheckinEvents || currentCheckinEvents.length === 0) {
+                        showModal('⏰ Não há eventos disponíveis para check-in no momento.<br><br>O check-in fica disponível 2h antes até 2h após o evento.', false, null, false, null, '⏰');
                     }
                 } catch (error) {
                     loadingDiv.remove();
+                    console.error('❌ Erro ao buscar eventos para check-in:', error);
                     showModal('❌ Erro ao buscar eventos. Tente novamente.');
                 }
             });
@@ -7946,3 +10033,4 @@
     </script>
 </body>
 </html>
+
