@@ -155,7 +155,7 @@
         }
         .team-btn .team-name-fallback {
             display: none;
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: bold;
             color: white;
             text-align: center;
@@ -439,9 +439,9 @@
                             <div class="team-name-fallback">KIDS</div>
                         </button>
                         <button class="team-btn rounded-lg" data-team="comunicacao"
-                                data-img-normal="https://github.com/escalaserver/zele-teste/blob/main/Comunica%C3%A7%C3%A3o%20azul%20escuro.png?raw=true"
-                                data-img-selected="https://github.com/escalaserver/zele-teste/blob/main/Comunica%C3%A7%C3%A3o%20azul%20claro.png?raw=true">
-                            <img src="https://github.com/escalaserver/zele-teste/blob/main/Comunica%C3%A7%C3%A3o%20azul%20escuro.png?raw=true" alt="Comunicação" onerror="this.classList.add('error');this.style.display='none';">
+                                data-img-normal="https://github.com/escalaserver/zele/blob/main/Logo%20Comunica%C3%A7%C3%A3o%20horizontal.png?raw=true"
+                                data-img-selected="https://github.com/escalaserver/zele/blob/main/Comunica%C3%A7%C3%A3o%20azul%20claro.png?raw=true">
+                            <img src="https://github.com/escalaserver/zele/blob/main/Logo%20Comunica%C3%A7%C3%A3o%20horizontal.png?raw=true" alt="Comunicação" onerror="this.classList.add('error');this.style.display='none';">
                             <div class="team-name-fallback">COMUNICAÇÃO</div>
                         </button>
                     </div>
@@ -3831,16 +3831,16 @@
                     }
 
                     // Verificar se falta menos de 24h para o evento OU se é time KIDS
-                    // Permitir inscrição até 1h APÓS o início do evento (para última hora)
+                    // Permitir inscrição até 2h APÓS o início do evento (para última hora)
                     const eventDateTime = new Date(`${date}T${time}`);
-                    const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                    const eventEndTime = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000)); // 2h após início
                     const now = new Date();
                     const hoursUntilEvent = (eventDateTime - now) / (1000 * 60 * 60);
                     const hoursUntilEventEnd = (eventEndTime - now) / (1000 * 60 * 60);
                     
-                    console.log('⏰ Verificação 24h (com janela de 1h após início):');
+                    console.log('⏰ Verificação 24h (com janela de 2h após início):');
                     console.log('  Data/Hora evento:', eventDateTime);
-                    console.log('  Data/Hora fim (evento + 1h):', eventEndTime);
+                    console.log('  Data/Hora fim (evento + 2h):', eventEndTime);
                     console.log('  Data/Hora atual:', now);
                     console.log('  Horas até evento:', hoursUntilEvent);
                     console.log('  Horas até fim da janela:', hoursUntilEventEnd);
@@ -3849,10 +3849,10 @@
                     // Determinar se é pending
                     // - Kids SEMPRE vai para PENDING (mesmo dentro da janela rápida)
                     // - Se falta < 24h e ainda não começou → PENDING
-                    // - Se evento já começou e está dentro da janela de 1h → CONFIRMADO (entrada rápida) exceto Kids
-                    const isDuringQuickEntryWindow = hoursUntilEvent < 0 && hoursUntilEventEnd > 0; // Evento iniciado, dentro de 1h
+                    // - Se evento já começou e está dentro da janela de 2h → CONFIRMADO (entrada rápida) exceto Kids
+                    const isDuringQuickEntryWindow = hoursUntilEvent < 0 && hoursUntilEventEnd > 0; // Evento iniciado, dentro de 2h
                     const isPending = team === 'kids' || ((hoursUntilEvent < 24 && hoursUntilEvent > 0) && !isDuringQuickEntryWindow);
-                    console.log('  Está na janela de entrada rápida (1h após início)?', isDuringQuickEntryWindow);
+                    console.log('  Está na janela de entrada rápida (2h após início)?', isDuringQuickEntryWindow);
                     console.log('  É pendente (<24h ou Kids)?', isPending);
                     
                     // Verificar limite de voluntários no time para esta data/hora
@@ -4162,7 +4162,7 @@
                     
                     const escalas = allEscalas.filter(escala => {
                         const eventDateTime = new Date(escala.date + 'T' + escala.time);
-                        const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
+                        const eventEndTime = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000)); // 2h após início
                         const isVisible = eventEndTime > now;
                         
                         if (escala.date === '2025-12-04' && escala.time === '19:00') {
@@ -4173,7 +4173,7 @@
                             console.log('  isVisible:', isVisible);
                         }
                         
-                        return isVisible; // Mostra até 1h após início
+                        return isVisible; // Mostra até 2h após início
                     });
 
                     // Ordenar por data e horário (ordem crescente)
@@ -4226,7 +4226,7 @@
                         const now = new Date();
                         const escalas = allEscalas.filter(escala => {
                             const eventDateTime = new Date(escala.date + 'T' + escala.time);
-                            const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000));
+                            const eventEndTime = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000));
                             return eventEndTime > now;
                         });
                         
@@ -4420,8 +4420,8 @@
                         availableDates = availableDates.filter(d => {
                             const [date, time] = d.value.split('|');
                             const eventDateTime = new Date(date + 'T' + time);
-                            const eventEndTime = new Date(eventDateTime.getTime() + (1 * 60 * 60 * 1000)); // 1h após início
-                            const isVisible = eventEndTime > now; // Visível até 1h após início
+                            const eventEndTime = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000)); // 2h após início
+                            const isVisible = eventEndTime > now; // Visível até 2h após início
                             console.log(`🔍 DEBUG - Evento: ${d.text} (${d.value}) → ${eventDateTime.toISOString()} → Fim janela: ${eventEndTime.toISOString()} → Visível? ${isVisible}`);
                             return isVisible;
                         });
@@ -10020,9 +10020,9 @@
                     const { collection, query, where, getDocs } = window.firestoreMethods;
                     const now = new Date();
                     const twoHoursBefore = new Date(now.getTime() - (2 * 60 * 60 * 1000));
-                    const twoHoursAfter = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+                    const fourHoursAfter = new Date(now.getTime() + (4 * 60 * 60 * 1000));
 
-                    console.log('🔍 Check-in: Buscando eventos entre', twoHoursBefore, 'e', twoHoursAfter);
+                    console.log('🔍 Check-in: Buscando eventos entre', twoHoursBefore, 'e', fourHoursAfter);
 
                     // Buscar escalas dos times que lidera
                     const escalasRef = collection(window.firebaseDb, 'escalas');
@@ -10034,11 +10034,11 @@
                         const escala = { id: doc.id, ...doc.data() };
                         const eventDateTime = new Date(escala.date + 'T' + escala.time);
                         
-                        // Verificar se está na janela: 2h antes até 2h depois
+                        // Verificar se está na janela: 2h antes até 4h depois
                         const twoHoursBeforeEvent = new Date(eventDateTime.getTime() - (2 * 60 * 60 * 1000));
-                        const twoHoursAfterEvent = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000));
+                        const fourHoursAfterEvent = new Date(eventDateTime.getTime() + (4 * 60 * 60 * 1000));
 
-                        if (now >= twoHoursBeforeEvent && now <= twoHoursAfterEvent) {
+                        if (now >= twoHoursBeforeEvent && now <= fourHoursAfterEvent) {
                             eventsInWindow.push({ ...escala, eventDateTime });
                         }
                     });
@@ -10262,7 +10262,7 @@
                     loadingDiv.remove();
                     
                     if (!currentCheckinEvents || currentCheckinEvents.length === 0) {
-                        showModal('⏰ Não há eventos disponíveis para check-in no momento.<br><br>O check-in fica disponível 2h antes até 2h após o evento.', false, null, false, null, '⏰');
+                        showModal('⏰ Não há eventos disponíveis para check-in no momento.<br><br>O check-in fica disponível 2h antes até 4h após o evento.', false, null, false, null, '⏰');
                     }
                 } catch (error) {
                     loadingDiv.remove();
