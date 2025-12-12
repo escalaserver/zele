@@ -1569,6 +1569,30 @@
         </div>
     </div>
 
+    <!-- Modal: Seleção de Evento para Check-in -->
+    <div id="checkin-event-selector-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="close-event-selector-modal" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-3" style="color: #151b29;">📋 Selecione o Evento</h3>
+                <p class="text-sm text-gray-600 mb-4">Escolha o evento para fazer check-in (últimos 30 dias):</p>
+                
+                <div id="event-selector-list" class="space-y-2 mb-4">
+                    <!-- Lista de eventos será inserida aqui -->
+                </div>
+                
+                <button id="close-event-selector-btn" class="w-full py-3 px-6 text-white font-bold rounded-lg transition hover:opacity-90" style="background-color: #151b29;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Check-in de Voluntários -->
     <!-- Modal: Check-in de Voluntários -->
     <div id="checkin-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
@@ -10251,9 +10275,181 @@
                 }
             });
             
-            // Menu button para abrir check-in
+            // Listeners do modal de seleção de evento
+            document.getElementById('close-event-selector-modal')?.addEventListener('click', closeEventSelectorModal);
+            document.getElementById('close-event-selector-btn')?.addEventListener('click', closeEventSelectorModal);
+            
+            // Listener do overlay para fechar ao clicar fora
+            document.getElementById('checkin-event-selector-modal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'checkin-event-selector-modal') {
+                    closeEventSelectorModal();
+                }
+            });
+            
+            // Função para abrir modal de seleção de evento
+            async function openEventSelectorModal() {
+                if (!isTeamLeader || !userTeamLeadership || userTeamLeadership.length === 0) {
+                    console.log('🔍 Check-in: Usuário não é líder de time');
+                    return;
+                }
+
+                try {
+                    const { collection, query, where, getDocs } = window.firestoreMethods;
+                    const now = new Date();
+                    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+                    console.log('🔍 Check-in: Buscando eventos dos últimos 30 dias');
+
+                    // Buscar escalas dos times que lidera
+                    const escalasRef = collection(window.firebaseDb, 'escalas');
+                    const q = query(escalasRef, where('team', 'in', userTeamLeadership));
+                    const snapshot = await getDocs(q);
+
+                    const eventsInLast30Days = [];
+                    snapshot.forEach(doc => {
+                        const escala = { id: doc.id, ...doc.data() };
+                        const eventDateTime = new Date(escala.date + 'T' + escala.time);
+                        
+                        // Verificar se está nos últimos 30 dias
+                        if (eventDateTime >= thirtyDaysAgo && eventDateTime <= now) {
+                            eventsInLast30Days.push({ ...escala, eventDateTime });
+                        }
+                    });
+
+                    console.log('🔍 Check-in: Eventos encontrados (últimos 30 dias):', eventsInLast30Days.length);
+
+                    if (eventsInLast30Days.length === 0) {
+                        showModal('📭 Não há eventos nos últimos 30 dias.', false, null, false, null, '📭');
+                        return;
+                    }
+
+                    // Agrupar por evento (date + time)
+                    const groupedByEvent = {};
+                    eventsInLast30Days.forEach(escala => {
+                        const key = `${escala.date}_${escala.time}`;
+                        if (!groupedByEvent[key]) {
+                            groupedByEvent[key] = {
+                                date: escala.date,
+                                time: escala.time,
+                                eventName: escala.eventName,
+                                eventDateTime: escala.eventDateTime,
+                                teams: {}
+                            };
+                        }
+                        if (!groupedByEvent[key].teams[escala.team]) {
+                            groupedByEvent[key].teams[escala.team] = [];
+                        }
+                        groupedByEvent[key].teams[escala.team].push(escala);
+                    });
+
+                    // Ordenar eventos por data/hora (mais recente primeiro)
+                    const sortedEvents = Object.entries(groupedByEvent).sort((a, b) => {
+                        return b[1].eventDateTime - a[1].eventDateTime; // Mais recente primeiro
+                    });
+
+                    // Renderizar lista de eventos
+                    const eventsList = document.getElementById('event-selector-list');
+                    eventsList.innerHTML = sortedEvents.map(([key, event]) => {
+                        const dateObj = new Date(event.date + 'T' + event.time);
+                        const dateStr = dateObj.toLocaleDateString('pt-BR', { 
+                            weekday: 'short', 
+                            day: '2-digit', 
+                            month: '2-digit',
+                            year: 'numeric'
+                        });
+                        const timeStr = event.time;
+                        const eventNameDisplay = event.eventName ? ` - ${event.eventName}` : '';
+                        
+                        return `
+                            <button class="event-selector-btn w-full p-3 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-left"
+                                    data-date="${event.date}"
+                                    data-time="${event.time}">
+                                <div class="font-semibold text-gray-800">${dateStr}${eventNameDisplay}</div>
+                                <div class="text-sm text-gray-600">🕐 ${timeStr}</div>
+                            </button>
+                        `;
+                    }).join('');
+
+                    // Adicionar listeners aos botões de evento
+                    document.querySelectorAll('.event-selector-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const selectedDate = btn.dataset.date;
+                            const selectedTime = btn.dataset.time;
+                            closeEventSelectorModal();
+                            await loadCheckinForSpecificEvent(selectedDate, selectedTime);
+                        });
+                    });
+
+                    // Mostrar modal
+                    document.getElementById('checkin-event-selector-modal').classList.remove('hidden');
+                } catch (error) {
+                    console.error('❌ Erro ao buscar eventos:', error);
+                    showModal('❌ Erro ao buscar eventos. Tente novamente.');
+                }
+            }
+
+            function closeEventSelectorModal() {
+                document.getElementById('checkin-event-selector-modal').classList.add('hidden');
+            }
+
+            // Função para carregar check-in de evento específico
+            async function loadCheckinForSpecificEvent(date, time) {
+                if (!isTeamLeader || !userTeamLeadership || userTeamLeadership.length === 0) {
+                    return;
+                }
+
+                try {
+                    const { collection, query, where, getDocs } = window.firestoreMethods;
+
+                    // Buscar escalas deste evento específico para os times que lidera
+                    const escalasRef = collection(window.firebaseDb, 'escalas');
+                    const q = query(escalasRef, where('team', 'in', userTeamLeadership));
+                    const snapshot = await getDocs(q);
+
+                    const eventEscalas = [];
+                    snapshot.forEach(doc => {
+                        const escala = { id: doc.id, ...doc.data() };
+                        if (escala.date === date && escala.time === time) {
+                            eventEscalas.push(escala);
+                        }
+                    });
+
+                    if (eventEscalas.length === 0) {
+                        showModal('📭 Não há voluntários escalados para este evento.', false, null, false, null, '📭');
+                        return;
+                    }
+
+                    // Agrupar por time
+                    const groupedByTeam = {};
+                    eventEscalas.forEach(escala => {
+                        if (!groupedByTeam[escala.team]) {
+                            groupedByTeam[escala.team] = [];
+                        }
+                        groupedByTeam[escala.team].push(escala);
+                    });
+
+                    // Criar objeto de evento para passar ao modal
+                    const eventDateTime = new Date(date + 'T' + time);
+                    const eventData = {
+                        date: date,
+                        time: time,
+                        eventName: eventEscalas[0].eventName || '',
+                        eventDateTime: eventDateTime,
+                        teams: groupedByTeam
+                    };
+
+                    // Armazenar e abrir modal de check-in
+                    currentCheckinEvents = [eventData];
+                    openCheckinModal();
+                } catch (error) {
+                    console.error('❌ Erro ao carregar check-in do evento:', error);
+                    showModal('❌ Erro ao carregar evento. Tente novamente.');
+                }
+            }
+            
+            // Menu button para abrir seleção de eventos
             document.getElementById('menu-checkin-btn')?.addEventListener('click', async () => {
-                closeMenu(); // Fechar menu antes de buscar eventos
+                closeMenu();
                 
                 // Mostrar indicador de carregamento
                 const loadingDiv = document.createElement('div');
@@ -10262,12 +10458,15 @@
                 document.body.appendChild(loadingDiv);
                 
                 try {
+                    // Primeiro tenta buscar eventos na janela automática (2h antes até 4h depois)
                     await checkForCheckinEvents();
                     loadingDiv.remove();
                     
+                    // Se não houver eventos na janela, abre seletor manual
                     if (!currentCheckinEvents || currentCheckinEvents.length === 0) {
-                        showModal('⏰ Não há eventos disponíveis para check-in no momento.<br><br>O check-in fica disponível 2h antes até 4h após o evento.', false, null, false, null, '⏰');
+                        await openEventSelectorModal();
                     }
+                    // Se houver eventos na janela, abre o modal diretamente
                 } catch (error) {
                     loadingDiv.remove();
                     console.error('❌ Erro ao buscar eventos para check-in:', error);
