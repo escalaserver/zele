@@ -7308,18 +7308,17 @@
                     const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const eventName = data.eventName ? ` - ${data.eventName}` : '';
 
-                    // Função para renderizar voluntários com botão de deletar e transferir (para líderes do time específico)
+                    // Função para renderizar voluntários com botão de deletar e transferir (apenas para super admin)
                     const renderVolunteers = (volunteers, teamName) => {
                         if (volunteers.length === 0) {
                             return '<div class="text-gray-400">Ninguém escalado</div>';
                         }
                         
                         const teamKey = teamName.toLowerCase();
-                        // Superadmin pode gerenciar TODOS os times
-                        // Admin/líder pode gerenciar SOMENTE os times que lidera
-                        const canManageThisTeam = isSuperAdmin || ((isAdmin || isTeamLeader) && userTeamLeadership && userTeamLeadership.includes(teamKey));
+                        // Apenas superadmin pode ver e usar os botões de transferir/excluir na visão geral
+                        const canManageThisTeam = isSuperAdmin;
                         
-                        console.log(`🔍 Team: ${teamKey}, isSuperAdmin: ${isSuperAdmin}, isAdmin: ${isAdmin}, isTeamLeader: ${isTeamLeader}, leadership:`, userTeamLeadership, `canManage: ${canManageThisTeam}`);
+                        console.log(`🔍 Team: ${teamKey}, isSuperAdmin: ${isSuperAdmin}, canManage: ${canManageThisTeam}`);
                         
                         return volunteers.map(v => `
                             <div class="flex items-center justify-between py-2 md:py-1">
