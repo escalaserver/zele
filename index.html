@@ -11079,6 +11079,14 @@
                     if (!leaderTeams.includes(teamKey)) return;
                     
                     const config = teamConfig[teamKey];
+                    
+                    // Ordenar voluntários por função (role) alfabeticamente
+                    const sortedVolunteers = volunteers.sort((a, b) => {
+                        const roleA = (a.role || '').toLowerCase();
+                        const roleB = (b.role || '').toLowerCase();
+                        return roleA.localeCompare(roleB, 'pt-BR');
+                    });
+                    
                     html += `
                         <div class="border-2 rounded-lg p-2 mb-2 ${config.color}">
                             <h4 class="font-semibold mb-2 flex items-center gap-1 text-sm">
@@ -11087,7 +11095,7 @@
                                 <span class="text-xs text-gray-500 font-normal">(${volunteers.length})</span>
                             </h4>
                             <div class="space-y-1">
-                                ${volunteers.map(v => {
+                                ${sortedVolunteers.map(v => {
                                     const photoUrl = v.userPhoto || 'Zele logo.png';
                                     const functionDisplay = v.role ? `<p class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded inline-block">${v.role}</p>` : '';
                                     
