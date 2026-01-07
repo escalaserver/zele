@@ -7308,7 +7308,14 @@
                         
                         console.log(`🔍 Team: ${teamKey}, isSuperAdmin: ${isSuperAdmin}, isAdmin: ${isAdmin}, isTeamLeader: ${isTeamLeader}, leadership:`, userTeamLeadership, `canManage: ${canManageThisTeam}`);
                         
-                        return volunteers.map(v => `
+                        // Ordenar voluntários por função (role) alfabeticamente
+                        const sortedVolunteers = volunteers.sort((a, b) => {
+                            const roleA = (a.role || '').toLowerCase();
+                            const roleB = (b.role || '').toLowerCase();
+                            return roleA.localeCompare(roleB, 'pt-BR');
+                        });
+                        
+                        return sortedVolunteers.map(v => `
                             <div class="flex items-center justify-between py-2 md:py-1">
                                 <span class="text-base md:text-sm font-medium">• ${v.userName}</span>
                                 ${canManageThisTeam ? `
@@ -8199,10 +8206,17 @@
                     
                     const config = teamConfig[teamKey];
                     
+                    // Ordenar voluntários por função (role) alfabeticamente
+                    const sortedVolunteers = volunteers.sort((a, b) => {
+                        const roleA = (a.role || '').toLowerCase();
+                        const roleB = (b.role || '').toLowerCase();
+                        return roleA.localeCompare(roleB, 'pt-BR');
+                    });
+                    
                     const teamDiv = document.createElement('div');
                     teamDiv.className = `border-2 rounded-lg p-3 ${config.color}`;
                     
-                    const volunteersHtml = volunteers.map(v => `
+                    const volunteersHtml = sortedVolunteers.map(v => `
                         <div class="flex items-center gap-2 py-1">
                             <img src="${v.photo || 'Zele logo.png'}" alt="${v.name}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                             <div class="flex-1 min-w-0">
@@ -10624,6 +10638,14 @@
 
                     Object.entries(event.teams).forEach(([teamKey, volunteers]) => {
                         const teamInfo = teamNames[teamKey] || { name: teamKey, icon: '👥', color: 'bg-gray-50' };
+                        
+                        // Ordenar voluntários por função (role) alfabeticamente
+                        const sortedVolunteers = volunteers.sort((a, b) => {
+                            const roleA = (a.role || '').toLowerCase();
+                            const roleB = (b.role || '').toLowerCase();
+                            return roleA.localeCompare(roleB, 'pt-BR');
+                        });
+                        
                         eventsHtml += `
                             <div class="border-l-4 ${teamInfo.color} border rounded p-3 mb-3">
                                 <h4 class="font-semibold mb-2 flex items-center gap-2">
@@ -10632,7 +10654,7 @@
                                     <span class="text-xs text-gray-500">(${volunteers.length})</span>
                                 </h4>
                                 <div class="space-y-2">
-                                    ${volunteers.map(v => {
+                                    ${sortedVolunteers.map(v => {
                                         const checkInStatus = v.checkIn?.status || 'pending';
                                         const photoUrl = v.userPhoto || 'Zele logo.png';
                                         return `
