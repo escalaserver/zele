@@ -1298,19 +1298,6 @@
                         </div>
                     </div>
                     
-                    <!-- Sábado -->
-                    <div class="border border-gray-300 rounded-lg p-3">
-                        <button class="day-toggle-btn w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition" data-day="saturday">
-                            <span class="font-semibold text-gray-700">Sábado</span>
-                            <span class="toggle-indicator text-gray-400">○</span>
-                        </button>
-                        <div class="period-options hidden mt-2 flex gap-2 justify-center" data-day="saturday">
-                            <button class="period-btn px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-blue-100 transition" data-period="morning">☀️ Manhã</button>
-                            <button class="period-btn px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-blue-100 transition" data-period="afternoon">🌤️ Tarde</button>
-                            <button class="period-btn px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-blue-100 transition" data-period="night">🌙 Noite</button>
-                        </div>
-                    </div>
-                    
                     <!-- Domingo -->
                     <div class="border border-gray-300 rounded-lg p-3">
                         <button class="day-toggle-btn w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition" data-day="sunday">
@@ -1319,6 +1306,7 @@
                         </button>
                         <div class="period-options hidden mt-2 flex gap-2 justify-center" data-day="sunday">
                             <button class="period-btn px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-blue-100 transition" data-period="morning">☀️ Manhã</button>
+                            <button class="period-btn px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-blue-100 transition" data-period="night">🌙 Noite</button>
                         </div>
                     </div>
                 </div>
@@ -1526,7 +1514,7 @@
                             </div>
                         </button>
 
-                        <button id="menu-manage-roles-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left">
+                        <button id="menu-manage-roles-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left border-b border-gray-100">
                             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
@@ -1535,6 +1523,17 @@
                                 <p class="text-xs text-gray-600">Configurar funções por time</p>
                             </div>
                         </button>
+
+                        <!-- Menu Análise com IA - DESABILITADO -->
+                        <!-- <button id="menu-ai-analysis-btn" class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left">
+                            <svg class="w-6 h-6" style="color: #10a37f;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5.36 4.364l-.707.707M9 12a3 3 0 11 6 0 3 3 0 01-6 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-gray-800">Análise com IA 🤖</p>
+                                <p class="text-xs text-gray-600">Faça perguntas sobre os dados</p>
+                            </div>
+                        </button> -->
                     </div>
                 </div>
 
@@ -1915,6 +1914,71 @@
 
                 <!-- Botão Fechar -->
                 <button id="close-roles-modal-btn" class="w-full mt-6 py-3 px-6 text-white font-bold rounded-lg transition hover:opacity-90" style="background-color: #151b29;">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Análise com IA 🤖 -->
+    <div id="ai-analysis-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative" style="max-height: 90vh; overflow-y: auto;">
+            <button id="close-ai-modal" class="sticky top-4 right-4 float-right z-10 bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-3xl">🤖</span>
+                    <div>
+                        <h3 class="text-2xl font-bold" style="color: #151b29;">Análise com IA</h3>
+                        <p class="text-sm text-gray-600">Faça perguntas sobre voluntários e escalas</p>
+                    </div>
+                </div>
+
+                <!-- Aviso de Configuração (caso não tenha configurado a chave no código) -->
+                <div id="ai-config-warning" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded hidden">
+                    <p class="text-sm text-yellow-800 mb-2"><strong>⚠️ Configuração Necessária</strong></p>
+                    <p class="text-xs text-yellow-700">A chave da API Claude não foi configurada no código. Entre em contato com o administrador do sistema para configurá-la.</p>
+                </div>
+
+                <!-- Área de Chat -->
+                <div id="ai-chat-area">
+                    <div id="ai-messages" class="bg-gray-50 rounded-lg p-4 mb-4 space-y-3 min-h-[300px] max-h-[400px] overflow-y-auto border border-gray-200">
+                        <div class="flex gap-3">
+                            <span class="text-2xl flex-shrink-0">🤖</span>
+                            <div class="bg-white p-3 rounded-lg rounded-tl-none">
+                                <p class="text-sm text-gray-800">Olá! Sou a IA do Zele Serve. Posso ajudar com perguntas sobre voluntários e escalas. Tente perguntar:</p>
+                                <ul class="text-xs text-gray-600 mt-2 space-y-1">
+                                    <li>• "Quais voluntários têm preferência no Welcome mas nunca se escalaram?"</li>
+                                    <li>• "Quem não foi escalado nos últimos 30 dias?"</li>
+                                    <li>• "Quem é o voluntário mais ativo no Kids?"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="ai-question-input" 
+                            placeholder="Faça uma pergunta sobre os voluntários e escalas..."
+                            class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                        <button id="ai-send-btn" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:shadow-lg transition">
+                            Enviar
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mt-3">
+                        💡 A IA analisa dados reais do sistema para responder suas perguntas de forma precisa.
+                    </p>
+                </div>
+
+                <!-- Botão Fechar -->
+                <button id="close-ai-modal-btn" class="w-full mt-6 py-3 px-6 text-white font-bold rounded-lg transition hover:opacity-90" style="background-color: #151b29;">
                     Fechar
                 </button>
             </div>
@@ -2717,6 +2781,7 @@
             let availableDates = [];
             let deferredPrompt = null;
             let isIOS = false;
+            let onboardingCompleted = false; // Flag para evitar reabertura do modal após salvar
             
             // Verificar e atualizar badge de próximos eventos
             function updateUpcomingEventsBadge(escalas) {
@@ -4026,13 +4091,20 @@
             }
 
             // Verificar limite de voluntários no time (máximo 4 por time por evento)
-            async function checkTeamLimit(date, time, team) {
+            async function checkTeamLimit(date, time, team, eventValue = null, excludeUserId = null) {
                 try {
                     // Buscar o evento específico
-                    const eventKey = availableDates.find(d => {
-                        const [eventDate, eventTime] = d.value.split('|');
-                        return eventDate === date && eventTime === time;
-                    });
+                    let eventKey;
+                    if (eventValue) {
+                        // Se temos eventValue, usar ele para buscar o evento exato
+                        eventKey = availableDates.find(d => d.value === eventValue);
+                    } else {
+                        // Fallback: buscar por date e time (retrocompatibilidade)
+                        eventKey = availableDates.find(d => {
+                            const [eventDate, eventTime] = d.value.split('|');
+                            return eventDate === date && eventTime === time;
+                        });
+                    }
                     
                     // Obter limite específico do time (novo formato) ou padrão 4
                     let maxVolunteers = 4;
@@ -4044,17 +4116,37 @@
                     }
                     
                     const { collection, query, where, getDocs } = window.firestoreMethods;
-                    const q = query(
-                        collection(window.firebaseDb, 'escalas'),
-                        where('date', '==', date),
-                        where('time', '==', time),
-                        where('team', '==', team)
-                    );
+                    
+                    // Buscar escalas - se temos eventValue, filtrar por ele também
+                    let q;
+                    if (eventValue) {
+                        q = query(
+                            collection(window.firebaseDb, 'escalas'),
+                            where('eventValue', '==', eventValue),
+                            where('team', '==', team),
+                            where('status', 'in', ['approved', 'pending'])
+                        );
+                    } else {
+                        // Fallback: usar date e time (retrocompatibilidade)
+                        q = query(
+                            collection(window.firebaseDb, 'escalas'),
+                            where('date', '==', date),
+                            where('time', '==', time),
+                            where('team', '==', team)
+                        );
+                    }
                     
                     const querySnapshot = await getDocs(q);
-                    const count = querySnapshot.size;
                     
-                    logger.log(`📊 Time ${team} no evento ${date} ${time}: ${count}/${maxVolunteers} voluntários`);
+                    // Filtrar manualmente para excluir o próprio usuário (ao mudar de time)
+                    let count = 0;
+                    querySnapshot.forEach((doc) => {
+                        if (!excludeUserId || doc.data().userId !== excludeUserId) {
+                            count++;
+                        }
+                    });
+                    
+                    logger.log(`📊 Time ${team} no evento ${eventValue || date + ' ' + time}: ${count}/${maxVolunteers} voluntários${excludeUserId ? ' (excluindo usuário atual)' : ''}`);
                     
                     return {
                         count: count,
@@ -4083,8 +4175,12 @@
                     return;
                 }
 
-                // Parsear os dados do culto (formato: "2024-11-20|19:00|Quinta")
-                const [date, time, eventName] = cultoData.split('|');
+                // Parsear os dados do culto (formato: "2024-11-20|19:00|Quinta - Nome Evento")
+                // Extrair as 3 primeiras partes, mantendo o eventName completo
+                const parts = cultoData.split('|');
+                const date = parts[0];
+                const time = parts[1];
+                const eventName = parts.slice(2).join('|'); // Juntar de volta caso tenha mais pipes no nome
 
                 const teamNames = {
                     welcome: '👋 Welcome',
@@ -4115,7 +4211,7 @@
 
                     // Verificar se falta menos de 24h para o evento OU se é time KIDS
                     // Permitir inscrição até 2h APÓS o início do evento (para última hora)
-                    const eventDateTime = new Date(`${date}T${time}`);
+                    const eventDateTime = new Date(`${date}T${time}:00`);
                     const eventEndTime = new Date(eventDateTime.getTime() + (2 * 60 * 60 * 1000)); // 2h após início
                     const now = new Date();
                     const hoursUntilEvent = (eventDateTime - now) / (1000 * 60 * 60);
@@ -4138,11 +4234,9 @@
                     console.log('  Está na janela de entrada rápida (2h após início)?', isDuringQuickEntryWindow);
                     console.log('  É pendente (<24h ou Kids)?', isPending);
                     
-                    // Verificar limite de voluntários no time para esta data/hora
-                    const teamLimit = await checkTeamLimit(date, time, team);
-                    
-                    // Verificar se já existe escala deste usuário para esta data e horário
-                    const escalaId = `${currentUser.uid}_${date}_${time}`;
+                    // Verificar se já existe escala deste usuário para este evento específico
+                    // Usar cultoData completo para garantir unicidade entre eventos no mesmo dia/horário
+                    const escalaId = `${currentUser.uid}_${cultoData.replace(/[^a-zA-Z0-9]/g, '_')}`;
                     const { doc, getDoc, setDoc } = window.firestoreMethods;
                     
                     // Buscar escala existente
@@ -4151,7 +4245,27 @@
                     
                     // Se usuário já está escalado neste evento
                     const userAlreadyInEvent = docSnap.exists();
-                    const isChangingTeam = userAlreadyInEvent && docSnap.data().team !== team;
+                    const existingData = userAlreadyInEvent ? docSnap.data() : null;
+                    const existingStatus = existingData?.status || null;
+                    const isChangingTeam = userAlreadyInEvent && existingData.team !== team;
+                    
+                    console.log('🔍 Verificação de escala existente:');
+                    console.log('  Usuário já está no evento?', userAlreadyInEvent);
+                    console.log('  Status existente:', existingStatus);
+                    console.log('  Time existente:', existingData?.team);
+                    console.log('  Novo time:', team);
+                    console.log('  Está mudando de time?', isChangingTeam);
+                    
+                    // Verificar limite de voluntários no time para este evento específico
+                    // Se está mudando de time, excluir a contagem do próprio usuário
+                    const teamLimit = await checkTeamLimit(date, time, team, cultoData, isChangingTeam ? currentUser.uid : null);
+                    
+                    console.log('🔍 Verificação de escala existente:');
+                    console.log('  Usuário já está no evento?', userAlreadyInEvent);
+                    console.log('  Status existente:', existingStatus);
+                    console.log('  Time existente:', existingData?.team);
+                    console.log('  Novo time:', team);
+                    console.log('  Está mudando de time?', isChangingTeam);
                     
                     // Se time está cheio E usuário não está mudando de time (nova entrada)
                     if (teamLimit.isFull && !isChangingTeam) {
@@ -4162,7 +4276,7 @@
                         const eventDisplay = eventName ? ` - ${eventName}` : '';
                         
                         // Criar escala como pendente para aprovação do líder
-                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, false, 'pending');
+                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, false, 'pending');
                         
                         // Criar elemento de mensagem com HTML
                         const message = document.createElement('div');
@@ -4193,7 +4307,7 @@
                             if (isPending) {
                                 console.log('⛔ PENDENTE: Salvando como pending (mesmo time, <24h ou Kids)');
                                 // Salvar automaticamente sem botões SIM/NÃO
-                                await saveEscalaToFirestore(escalaId, date, time, team, eventName, true, 'pending');
+                                await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, true, 'pending');
                                 
                                 // Mensagem específica para Kids
                                 if (team === 'kids') {
@@ -4222,7 +4336,7 @@
                                     `Confirmar escala no time ${teamNames[team]}?`,
                                     true,
                                     async () => {
-                                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, true, 'approved');
+                                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, true, 'approved');
                                     }
                                 );
                             }
@@ -4231,7 +4345,7 @@
                             if (isPending) {
                                 console.log('⛔ PENDENTE: Salvando como pending (mudança de time, <24h ou Kids)');
                                 // Salvar automaticamente sem botões SIM/NÃO
-                                await saveEscalaToFirestore(escalaId, date, time, team, eventName, false, 'pending');
+                                await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, false, 'pending');
                                 
                                 // Mensagem específica para Kids
                                 if (team === 'kids') {
@@ -4260,7 +4374,7 @@
                                     `Você já escolheu servir no time ${teamNames[existingTeam]}. Deseja confirmar a mudança para o time ${teamNames[team]} nesta escala?`,
                                     true,
                                     async () => {
-                                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, false, 'approved');
+                                        await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, false, 'approved');
                                     }
                                 );
                             }
@@ -4270,7 +4384,7 @@
                         if (isPending) {
                             console.log('⛔ PENDENTE: Salvando nova escala como pending (<24h ou Kids)');
                             // Escala pendente (menos de 24h ou Kids) - salvar automaticamente
-                            await saveEscalaToFirestore(escalaId, date, time, team, eventName, false, 'pending');
+                            await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, false, 'pending');
                             
                             // Mensagem específica para Kids
                             if (team === 'kids') {
@@ -4300,7 +4414,7 @@
                                 `Confirmar escala no time ${teamNames[team]}?`,
                                 true,
                                 async () => {
-                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName, false, 'approved');
+                                    await saveEscalaToFirestore(escalaId, date, time, team, eventName, cultoData, false, 'approved');
                                 }
                             );
                         }
@@ -4313,15 +4427,41 @@
             }
 
             // Função auxiliar para salvar no Firestore
-            async function saveEscalaToFirestore(escalaId, date, time, team, eventName, skipCalendarPrompt, status = 'approved') {
+            async function saveEscalaToFirestore(escalaId, date, time, team, eventName, eventValue, skipCalendarPrompt, status = 'approved') {
                 try {
                     console.log('💾 saveEscalaToFirestore chamada:');
                     console.log('  escalaId:', escalaId);
                     console.log('  status:', status);
                     console.log('  team:', team);
                     console.log('  date/time:', date, time);
+                    console.log('  eventValue:', eventValue);
                     
-                    const { doc, setDoc, Timestamp } = window.firestoreMethods;
+                    // IMPORTANTE: Verificar se já existe outra escala deste usuário neste evento
+                    const { doc, setDoc, Timestamp, collection, query, where, getDocs, deleteDoc } = window.firestoreMethods;
+                    
+                    // Buscar escalas duplicadas (mesmo userId e eventValue, mas IDs diferentes)
+                    const duplicateCheckQuery = query(
+                        collection(window.firebaseDb, 'escalas'),
+                        where('userId', '==', currentUser.uid),
+                        where('eventValue', '==', eventValue)
+                    );
+                    
+                    const duplicateSnapshot = await getDocs(duplicateCheckQuery);
+                    console.log('🔍 Verificação de duplicatas:', duplicateSnapshot.size, 'documentos encontrados');
+                    
+                    // Deletar todas as escalas existentes deste usuário neste evento (exceto a que vamos salvar)
+                    const deletePromises = [];
+                    duplicateSnapshot.forEach((docSnap) => {
+                        if (docSnap.id !== escalaId) {
+                            console.log('🗑️ Deletando escala duplicada:', docSnap.id);
+                            deletePromises.push(deleteDoc(doc(window.firebaseDb, 'escalas', docSnap.id)));
+                        }
+                    });
+                    
+                    if (deletePromises.length > 0) {
+                        await Promise.all(deletePromises);
+                        console.log('✅ Removidas', deletePromises.length, 'escalas duplicadas');
+                    }
                     
                     // Converter date (YYYY-MM-DD) e time (HH:MM) para Timestamp do Firestore
                     const eventDateTime = new Date(`${date}T${time}:00`);
@@ -4335,6 +4475,7 @@
                         time: time,
                         team: team,
                         eventName: eventName || '',
+                        eventValue: eventValue || `${date}|${time}`, // Valor completo do evento para identificação única
                         createdAt: new Date().toISOString(),
                         status: status,
                         requestedTeam: team,
@@ -6350,10 +6491,11 @@
                     availableDates.forEach((date) => {
                         const dateParts = date.value.split('|');
                         events.push({
-                            value: dateParts[0],
-                            time: dateParts[1],
+                            value: date.value, // Usar value completo para unicidade
+                            date: dateParts[0], // Data YYYY-MM-DD
+                            time: dateParts[1], // Horário HH:MM
                             text: date.text,
-                            eventName: dateParts.length > 2 ? dateParts[2] : ''
+                            eventName: dateParts.length > 2 ? dateParts.slice(2).join('|') : ''
                         });
                     });
                     
@@ -6394,9 +6536,9 @@
             }
 
             // Selecionar evento
-            function selectEventForManualScale(eventDate, eventTime) {
+            function selectEventForManualScale(eventValue, eventTime) {
                 try {
-                    const event = manualScaleState.allEvents.find(e => e.value === eventDate && e.time === eventTime);
+                    const event = manualScaleState.allEvents.find(e => e.value === eventValue);
                     
                     console.log('📅 Evento selecionado:', event.text);
                     
@@ -6520,21 +6662,22 @@
                     
                     const { doc, setDoc, Timestamp } = window.firestoreMethods;
                     
-                    // Gerar ID da escala
-                    const escalaId = `${selectedVolunteer.id}_${selectedEvent.value}_${selectedTeam}`;
+                    // Gerar ID da escala usando value completo para unicidade
+                    const escalaId = `${selectedVolunteer.id}_${selectedEvent.value.replace(/[^a-zA-Z0-9]/g, '_')}_${selectedTeam}`;
                     
                     // Converter data/hora para Timestamp
-                    const eventDateTime = new Date(`${selectedEvent.value}T${selectedEvent.time}:00`);
+                    const eventDateTime = new Date(`${selectedEvent.date}T${selectedEvent.time}:00`);
                     
                     // Criar documento da escala
                     const escalaData = {
                         userId: selectedVolunteer.id,
                         userName: selectedVolunteer.name,
                         userEmail: selectedVolunteer.email,
-                        date: selectedEvent.value,
+                        date: selectedEvent.date,
                         time: selectedEvent.time,
                         team: selectedTeam,
                         eventName: selectedEvent.eventName || '',
+                        eventValue: selectedEvent.value, // Valor completo do evento para identificação única
                         status: 'approved', // Escala manual é automaticamente aprovada
                         createdAt: new Date().toISOString(),
                         createdByAdmin: currentUser.uid,
@@ -7091,6 +7234,10 @@
                             const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
                             const newText = `${day}/${month} ${weekdayCapitalized} | ${newEvent} (chegar ${newTime})`;
                             
+                            console.log('✏️ Atualizando evento:');
+                            console.log('  Valor antigo (eventValue):', oldValue);
+                            console.log('  Valor novo (eventValue):', newValue);
+                            
                             // Atualizar no array com novos limites
                             availableDates[index] = {
                                 ...dateToEdit,
@@ -7110,14 +7257,14 @@
                                 lastUpdated: new Date().toISOString()
                             });
                             
-                            // 2. Atualizar todas as escalas desta data
+                            // 2. Atualizar todas as escalas DESTE EVENTO ESPECÍFICO (usando eventValue)
                             const q = query(
                                 collection(window.firebaseDb, 'escalas'),
-                                where('date', '==', oldDate)
+                                where('eventValue', '==', oldValue)
                             );
                             
                             const querySnapshot = await getDocs(q);
-                            console.log('📋 Atualizando escalas:', querySnapshot.size);
+                            console.log('📋 Atualizando escalas deste evento:', querySnapshot.size);
                             
                             const updatePromises = [];
                             querySnapshot.forEach((docSnapshot) => {
@@ -7126,6 +7273,7 @@
                                     date: newDate,
                                     time: newTime,
                                     eventName: newEvent,
+                                    eventValue: newValue, // Atualizar eventValue para o novo valor
                                     culto: newText, // Atualizar campo culto também
                                     updatedAt: new Date().toISOString()
                                 }));
@@ -7170,24 +7318,24 @@
                     }
                     
                     const dateToDelete = availableDates[index];
-                    const dateValue = dateToDelete.value.split('|')[0]; // Extrair apenas a data (YYYY-MM-DD)
+                    const eventValue = dateToDelete.value; // Usar value completo do evento
                     
-                    console.log('🗑️ Data a deletar:', dateToDelete.text);
-                    console.log('🗑️ Valor da data (YYYY-MM-DD):', dateValue);
-                    console.log('🗑️ Deletando data:', dateValue);
+                    console.log('🗑️ Evento a deletar:', dateToDelete.text);
+                    console.log('🗑️ Valor do evento (eventValue):', eventValue);
+                    console.log('🗑️ Deletando evento:', eventValue);
                     
-                    // 1. Buscar todas as escalas desta data
+                    // 1. Buscar todas as escalas DESTE EVENTO ESPECÍFICO (usando eventValue)
                     const { collection, query, where, getDocs, deleteDoc, doc, setDoc, addDoc } = window.firestoreMethods;
                     const q = query(
                         collection(window.firebaseDb, 'escalas'),
-                        where('date', '==', dateValue)
+                        where('eventValue', '==', eventValue)
                     );
                     
                     const querySnapshot = await getDocs(q);
                     console.log('📋 Escalas encontradas para deletar:', querySnapshot.size);
                     
                     if (querySnapshot.size > 0) {
-                        console.log('⚠️ CUIDADO: Deletando', querySnapshot.size, 'escalas da data', dateValue);
+                        console.log('⚠️ CUIDADO: Deletando', querySnapshot.size, 'escalas do evento', eventValue);
                     }
                     
                     // 2. CRIAR BACKUP antes de deletar
@@ -7205,7 +7353,7 @@
                     if (escalasBackup.length > 0) {
                         try {
                             // Salvar backup em coleção separada
-                            const backupId = `backup_${dateValue}_${Date.now()}`;
+                            const backupId = `backup_${eventValue.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
                             await setDoc(doc(window.firebaseDb, 'escalas_backups', backupId), {
                                 backupId: backupId,
                                 dateDeleted: dateValue,
@@ -10030,6 +10178,10 @@
                     }
                     console.log('✅ Documento completo pós-salvo:', vData);
 
+                    // Marcar onboarding como completo nesta sessão para evitar reabrir
+                    onboardingCompleted = true;
+                    console.log('🔄 Flag onboardingCompleted definida para true');
+
                     // Fechar modais
                     const confirmModal = document.getElementById('onboarding-confirm-modal');
                     const mainModal = document.getElementById('onboarding-modal');
@@ -10051,6 +10203,13 @@
             async function checkOnboarding(user) {
                 try {
                     if (!user?.uid) return;
+                    
+                    // Se onboarding já foi concluído nesta sessão, não mostrar
+                    if (onboardingCompleted) {
+                        console.log('✅ Onboarding já concluído nesta sessão - não mostrar modal');
+                        return;
+                    }
+                    
                     const { doc, getDoc } = window.firestoreMethods;
                     const ref = doc(window.firebaseDb, 'users', user.uid);
                     const userDoc = await getDoc(ref);
@@ -10069,6 +10228,7 @@
                             shouldShowOnboarding = true;
                         } else {
                             console.log('✅ Onboarding já foi completado');
+                            onboardingCompleted = true; // Marcar como completo
                         }
                     }
 
@@ -10369,34 +10529,32 @@
                 currentUser = user;
 
                 if (user) {
-                    // 1. Carregar dados essenciais do usuário (sequencial)
-                    await checkAdminStatus(user);
-                    
-                    // 2. Mostrar app imediatamente
+                    // 1. Mostrar app IMEDIATAMENTE (não espera nada)
                     updateUserUI(user);
                     showApp();
                     
-                    // 3. Carregar dados em paralelo (não bloqueia a UI)
+                    // 2. Carregar dados em paralelo (incluindo checkAdminStatus)
                     Promise.all([
+                        checkAdminStatus(user),
                         loadAvailableDates(),
                         loadUserEscalas(),
                         loadAllEscalas()
                     ]).then(() => {
-                        console.log('✅ Dados carregados');
+                        console.log('✅ Todos os dados carregados');
                         setupUserEscalasListener(); // Configurar listener após carregar escalas
                     }).catch(err => {
                         console.error('❌ Erro ao carregar dados:', err);
                     });
                     
-                    // 4. Operações secundárias (não bloqueiam)
+                    // 3. Operações secundárias (não bloqueiam)
                     setupInstallButton();
                     
-                    // 5. Verificar onboarding (pode ser feito depois)
+                    // 4. Verificar onboarding (pode ser feito depois)
                     setTimeout(async () => {
                         await checkOnboarding(user);
                     }, 500);
                     
-                    // 6. Verificar check-in de voluntários (para líderes)
+                    // 5. Verificar check-in de voluntários (para líderes)
                     setTimeout(async () => {
                         await checkForCheckinEvents();
                     }, 1500);
@@ -11432,6 +11590,268 @@
         } // FIM de initApp()
         
         // ========================================
+        // 🤖 ANÁLISE COM IA (GOOGLE GEMINI)
+        // ========================================
+        // CONFIGURE SUA CHAVE DA API AQUI (obtenha GRÁTIS em: https://aistudio.google.com/app/apikey)
+        const AI_API_KEY = 'AIzaSyCDAgkCHHKbP41f8pxSLc9nHKOHXnOYbLk'; // Substitua por sua chave do Google Gemini
+        const AI_MODEL = 'gemini-2.5-flash'; // Modelo solicitado
+        let aiModelsLogged = false; // Evita spam de logs ao listar modelos
+        
+        const aiModal = document.getElementById('ai-analysis-modal');
+        const aiConfigWarning = document.getElementById('ai-config-warning');
+        const aiChatArea = document.getElementById('ai-chat-area');
+        const aiMessages = document.getElementById('ai-messages');
+
+        // Diagnóstico: listar modelos disponíveis para a chave atual
+        async function logAvailableModels() {
+            if (aiModelsLogged || !AI_API_KEY) return;
+            aiModelsLogged = true;
+            try {
+                const resV1 = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${AI_API_KEY}`);
+                const dataV1 = await resV1.json();
+                console.log('📋 Modelos (v1):', dataV1);
+            } catch (err) {
+                console.warn('⚠️ Não foi possível listar modelos v1:', err?.message || err);
+            }
+
+            try {
+                const resV1b = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${AI_API_KEY}`);
+                const dataV1b = await resV1b.json();
+                console.log('📋 Modelos (v1beta):', dataV1b);
+            } catch (err) {
+                console.warn('⚠️ Não foi possível listar modelos v1beta:', err?.message || err);
+            }
+        }
+
+        // Verificar se a chave foi configurada
+        function updateAIStatus() {
+            if (AI_API_KEY && AI_API_KEY !== 'COLE_SUA_CHAVE_AQUI') {
+                aiConfigWarning.classList.add('hidden');
+                aiChatArea.classList.remove('hidden');
+            } else {
+                aiConfigWarning.classList.remove('hidden');
+                aiChatArea.classList.add('hidden');
+            }
+        }
+
+        // Abrir modal de IA
+        document.getElementById('menu-ai-analysis-btn')?.addEventListener('click', () => {
+            // Fechar menu manualmente
+            const menuOverlay = document.querySelector('.menu-overlay');
+            const menuDrawer = document.querySelector('.menu-drawer');
+            if (menuOverlay) menuOverlay.classList.remove('show');
+            if (menuDrawer) menuDrawer.classList.remove('show');
+            
+            updateAIStatus();
+            aiModal.classList.remove('hidden');
+            aiModal.style.display = 'flex';
+        });
+
+        // Fechar modal de IA
+        document.getElementById('close-ai-modal')?.addEventListener('click', () => {
+            aiModal.classList.add('hidden');
+            aiModal.style.display = 'none';
+        });
+
+        document.getElementById('close-ai-modal-btn')?.addEventListener('click', () => {
+            aiModal.classList.add('hidden');
+            aiModal.style.display = 'none';
+        });
+
+        aiModal?.addEventListener('click', (e) => {
+            if (e.target === aiModal) {
+                aiModal.classList.add('hidden');
+                aiModal.style.display = 'none';
+            }
+        });
+
+        // Removido: configuração manual da chave (agora é fixa no código)
+
+        // Função para obter contexto dos dados
+        async function getAnalysisContext() {
+            try {
+                const { collection, getDocs, query, where } = window.firestoreMethods;
+                
+                // Buscar todos os usuários (voluntários)
+                const usersRef = collection(window.firebaseDb, 'users');
+                const usersSnapshot = await getDocs(usersRef);
+                const volunteers = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    volunteers.push({
+                        id: doc.id,
+                        name: data.name || data.displayName || 'Sem nome',
+                        email: data.email || '',
+                        preferences: data.preferences || [],
+                        blockedDates: data.blockedDates || []
+                    });
+                });
+
+                // Buscar todas as escalas
+                const escalasRef = collection(window.firebaseDb, 'escalas');
+                const escalasSnapshot = await getDocs(escalasRef);
+                const escalas = [];
+                
+                escalasSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    escalas.push({
+                        id: doc.id,
+                        volunteer: data.userName || data.volunteerName || '',
+                        team: data.team || '',
+                        date: data.date || '',
+                        role: data.role || '',
+                        status: data.status || 'approved'
+                    });
+                });
+
+                return {
+                    volunteers,
+                    escalas,
+                    totalVolunteers: volunteers.length,
+                    totalEscalas: escalas.length
+                };
+            } catch (error) {
+                console.error('Erro ao buscar contexto:', error);
+                return { volunteers: [], escalas: [], totalVolunteers: 0, totalEscalas: 0 };
+            }
+        }
+
+        // Função para enviar mensagem à IA
+        async function sendAIQuestion(question) {
+            if (!AI_API_KEY || AI_API_KEY === 'COLE_SUA_CHAVE_AQUI') {
+                showModal('⚠️ A chave da API não foi configurada no código. Entre em contato com o administrador.');
+                return;
+            }
+
+            // Adicionar mensagem do usuário
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'flex gap-3 justify-end';
+            userMessageDiv.innerHTML = `<div class="bg-blue-500 text-white p-3 rounded-lg rounded-tr-none max-w-xs">
+                <p class="text-sm">${escapeHtml(question)}</p>
+            </div>`;
+            aiMessages.appendChild(userMessageDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+
+            // Mostrar loading
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'flex gap-3';
+            loadingDiv.innerHTML = `<span class="text-2xl">🤖</span><div class="bg-gray-200 p-3 rounded-lg"><p class="text-sm text-gray-600">Analisando...</p></div>`;
+            aiMessages.appendChild(loadingDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+
+            try {
+                // Obter contexto dos dados
+                const context = await getAnalysisContext();
+                
+                // Preparar contexto para a IA
+                const volunteersJson = JSON.stringify(context.volunteers, null, 2);
+                const escalasJson = JSON.stringify(context.escalas, null, 2);
+                
+                const prompt = `Você é um assistente de análise de dados para um sistema de escalas de voluntários chamado Zele Serve.
+
+CONTEXTO DOS DADOS:
+- Total de voluntários: ${context.totalVolunteers}
+- Total de escalas: ${context.totalEscalas}
+
+DADOS DOS VOLUNTÁRIOS:
+${volunteersJson}
+
+DADOS DAS ESCALAS:
+${escalasJson}
+
+INSTRUÇÕES:
+- Responda em português (Brasil)
+- Seja conciso e direto
+- Baseie suas respostas apenas nos dados fornecidos
+- Se não conseguir responder, explique por que
+- Use formatação clara com listas quando apropriado
+
+PERGUNTA DO USUÁRIO: ${question}`;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${AI_MODEL}:generateContent?key=${AI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 1024
+                        }
+                    })
+                });
+
+                loadingDiv.remove();
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    await logAvailableModels(); // Diagnosticar modelos liberados para esta chave
+                    throw new Error(error.error?.message || 'Erro ao processar requisição');
+                }
+
+                const data = await response.json();
+                const aiResponse = data.candidates[0]?.content?.parts[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
+
+                // Adicionar resposta da IA
+                const aiResponseDiv = document.createElement('div');
+                aiResponseDiv.className = 'flex gap-3';
+                aiResponseDiv.innerHTML = `<span class="text-2xl">🤖</span><div class="bg-white p-3 rounded-lg rounded-tl-none border border-gray-200">
+                    <p class="text-sm text-gray-800 whitespace-pre-wrap">${escapeHtml(aiResponse)}</p>
+                </div>`;
+                aiMessages.appendChild(aiResponseDiv);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+
+            } catch (error) {
+                console.error('Erro ao chamar IA:', error);
+                await logAvailableModels(); // Apenas primeira vez, para diagnóstico
+                loadingDiv.remove();
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'flex gap-3';
+                errorDiv.innerHTML = `<span class="text-2xl">🤖</span><div class="bg-red-100 p-3 rounded-lg">
+                    <p class="text-sm text-red-800">❌ Erro: ${error.message}</p>
+                </div>`;
+                aiMessages.appendChild(errorDiv);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+            }
+        }
+
+        // Função para escapar HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listener para enviar pergunta
+        document.getElementById('ai-send-btn')?.addEventListener('click', () => {
+            const input = document.getElementById('ai-question-input');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            sendAIQuestion(question);
+            input.value = '';
+            input.focus();
+        });
+
+        // Enviar com Enter
+        document.getElementById('ai-question-input')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('ai-send-btn').click();
+            }
+        });
+
+        // Inicializar status de IA ao carregar
+        updateAIStatus();
+
+        // ========================================
         // SERVICE WORKER (PWA) - HABILITADO
         // ========================================
         if ('serviceWorker' in navigator) {
@@ -11444,6 +11864,7 @@
                     .catch(err => console.log('⚠️ Service Worker não disponível:', err.message));
             });
         }
+        
         
         // Iniciar quando DOM estiver pronto
         if (document.readyState === 'loading') {
