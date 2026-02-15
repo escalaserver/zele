@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -30,7 +30,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         
@@ -38,12 +38,12 @@
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBGMYUmA0hJs1v2IlU-fdFDucYFp6LZaCg",
-            authDomain: "z-ele-church-escalas.firebaseapp.com",
-            projectId: "z-ele-church-escalas",
-            storageBucket: "z-ele-church-escalas.firebasestorage.app",
-            messagingSenderId: "473523773124",
-            appId: "1:473523773124:web:9c57a51236a5a8fabc3391"
+            apiKey: "AIzaSyBlMfqUkpQQrLHD13Hq3UJ43D4N1U1JviE",
+            authDomain: "zele-teste.firebaseapp.com",
+            projectId: "zele-teste",
+            storageBucket: "zele-teste.firebasestorage.app",
+            messagingSenderId: "758471959826",
+            appId: "1:758471959826:web:374288feffb10f31fc7fcb"
         };
         
         // Initialize Firebase
@@ -62,16 +62,129 @@
         window.firebaseDb = db;
         window.firebaseStorage = storage;
         window.firebaseProvider = provider;
-        window.firebaseAuthMethods = { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile };
+        window.firebaseAuthMethods = { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile };
         window.firestoreMethods = { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, orderBy, addDoc, updateDoc, limit, Timestamp };
         window.firebaseStorageMethods = { ref, uploadBytes, getDownloadURL };
         
         console.log('✅ Firebase inicializado e exportado para window');
         window.firebaseReady = true;
+        
+        // ═══════════════════════════════════════════════════════════════════
+        // CAPTURA DE REDIRECT RESULT - VERSÃO APRIMORADA
+        // ═══════════════════════════════════════════════════════════════════
+        
+        console.log('🔍 Verificando redirect result...');
+        console.log('📍 URL atual:', window.location.href);
+        console.log('🌐 Hostname:', window.location.hostname);
+        console.log('📁 Pathname:', window.location.pathname);
+        
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result && result.user) {
+                    // ✅ REDIRECT FOI CAPTURADO!
+                    console.log('✅✅✅ REDIRECT RESULT CAPTURADO! ✅✅✅');
+                    console.log('👤 Usuário:', result.user.displayName);
+                    console.log('📧 Email:', result.user.email);
+                    console.log('🆔 UID:', result.user.uid);
+                    console.log('🔑 Provider:', result.credential?.providerId);
+                    
+                    // Mostrar indicador visual na tela
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 30px 50px;
+                        border-radius: 15px;
+                        z-index: 999999;
+                        font-size: 18px;
+                        text-align: center;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                        animation: fadeIn 0.3s ease-in;
+                    `;
+                    successDiv.innerHTML = `
+                        <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                        <div style="font-weight: bold; margin-bottom: 10px;">Login Bem-Sucedido!</div>
+                        <div>Bem-vindo, ${result.user.displayName}!</div>
+                    `;
+                    document.body.appendChild(successDiv);
+                    
+                    // Remover após 3 segundos
+                    setTimeout(() => {
+                        successDiv.style.animation = 'fadeOut 0.3s ease-out';
+                        setTimeout(() => successDiv.remove(), 300);
+                    }, 3000);
+                    
+                } else if (result && !result.user) {
+                    console.log('⚠️ Redirect result existe mas sem usuário:', result);
+                    
+                } else {
+                    console.log('ℹ️ Nenhum redirect result pendente');
+                    console.log('💡 Isso é normal se:');
+                    console.log('   - Você não acabou de fazer login com Google');
+                    console.log('   - Você fez login via popup (não redirect)');
+                    console.log('   - É o primeiro carregamento da página');
+                }
+            })
+            .catch((error) => {
+                console.error('❌❌❌ ERRO AO PROCESSAR REDIRECT! ❌❌❌');
+                console.error('Código:', error.code);
+                console.error('Mensagem:', error.message);
+                console.error('Stack:', error.stack);
+                
+                // Diagnóstico detalhado
+                console.group('🔬 DIAGNÓSTICO DO ERRO');
+                console.log('URL atual:', window.location.href);
+                console.log('Hostname:', window.location.hostname);
+                console.log('Protocol:', window.location.protocol);
+                console.log('User Agent:', navigator.userAgent);
+                console.log('Cookies habilitados:', navigator.cookieEnabled);
+                console.groupEnd();
+                
+                if (error.code === 'auth/unauthorized-domain') {
+                    console.error('');
+                    console.error('🚨 DOMÍNIO NÃO AUTORIZADO! 🚨');
+                    console.error('');
+                    console.error('AÇÃO NECESSÁRIA:');
+                    console.error('1. Acesse: https://console.firebase.google.com/project/zele-teste/authentication/settings');
+                    console.error('2. Clique em "Authorized domains"');
+                    console.error('3. Adicione o domínio: ' + window.location.hostname);
+                    console.error('');
+                    
+                    alert(
+                        '🚨 ERRO DE CONFIGURAÇÃO!\n\n' +
+                        'O domínio "' + window.location.hostname + '" não está autorizado.\n\n' +
+                        'SOLUÇÃO:\n' +
+                        '1. Acesse o Firebase Console\n' +
+                        '2. Authentication → Settings → Authorized domains\n' +
+                        '3. Adicione: ' + window.location.hostname + '\n\n' +
+                        'Verifique o console para mais detalhes.'
+                    );
+                } else {
+                    alert('❌ Erro ao processar login:\n\n' + error.message + '\n\nVerifique o console para detalhes.');
+                }
+            });
+        
+        // Adicionar CSS para animações
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translate(-50%, -60%); }
+                to { opacity: 1; transform: translate(-50%, -50%); }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
     
-    <!-- Tailwind CDN: Para produção, considere instalar via npm e usar build process -->
-    <!-- Veja: https://tailwindcss.com/docs/installation -->
+    <!-- TODO: Migrar para Tailwind CLI ou PostCSS para produção -->
+    <!-- Aviso: cdn.tailwindcss.com não deve ser usado em produção -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -258,6 +371,7 @@
                 Entrar com Google
             </button>
             
+                         
             <!-- Link para login com email -->
             <button id="show-email-login" class="text-sm text-gray-600 hover:text-gray-800 mt-4 underline">
                 Se não tem Google, clique aqui
@@ -1705,6 +1819,56 @@
         </div>
     </div>
 
+    <!-- Modal de Incluir Novo Voluntário -->
+    <div id="add-volunteer-modal" class="modal-overlay">
+        <div class="card-float rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: #151b29;">➕ Incluir Novo Voluntário</h2>
+                <button id="close-add-volunteer-modal" class="text-gray-600 hover:text-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">
+                Este voluntário será adicionado ao sistema e estará disponível para escalação imediatamente.
+            </p>
+            
+            <div class="mb-4">
+                <label class="block text-left text-sm font-semibold mb-2" style="color: #151b29;">Nome Completo *</label>
+                <input type="text" id="new-volunteer-name" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: João Silva">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-left text-sm font-semibold mb-2" style="color: #151b29;">
+                    Email 
+                    <span style="color: #999; font-size: 0.9em;">(opcional)</span>
+                </label>
+                <input type="email" id="new-volunteer-email" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Deixe vazio se o voluntário não for acessar o app">
+                <p class="text-xs text-gray-500 mt-1">
+                    💡 Se não informar email, você gerenciará a escala deste voluntário manualmente
+                </p>
+            </div>
+            
+            <div class="bg-blue-50 p-3 rounded-lg mb-4 border-l-4 border-blue-500">
+                <p class="text-xs text-blue-900">
+                    <strong>📋 Status:</strong> Voluntários com email serão marcados como "pré-cadastrado" até que façam o primeiro login. 
+                    Voluntários sem email só poderão ser escalados manualmente pelo administrador.
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancel-add-volunteer-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition">
+                    Cancelar
+                </button>
+                <button id="confirm-add-volunteer-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition">
+                    ✅ Incluir
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Instruções iOS -->
     <div id="ios-install-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
@@ -2699,6 +2863,246 @@
                 console.error('❌ Modal não encontrado');
             }
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // FUNÇÃO DE DIAGNÓSTICO DO FIREBASE - DISPONÍVEL GLOBALMENTE
+        // ═══════════════════════════════════════════════════════════════════
+        function diagnosticarFirebase() {
+            console.clear();
+            console.log('═══════════════════════════════════════════');
+            console.log('🔬 DIAGNÓSTICO COMPLETO DO FIREBASE');
+            console.log('═══════════════════════════════════════════');
+            console.log('');
+            
+            // Informações do ambiente
+            console.group('🌐 AMBIENTE');
+            console.log('URL completa:', window.location.href);
+            console.log('Hostname:', window.location.hostname);
+            console.log('Protocol:', window.location.protocol);
+            console.log('Port:', window.location.port || 'padrão (80/443)');
+            console.log('Pathname:', window.location.pathname);
+            console.log('Origin:', window.location.origin);
+            console.groupEnd();
+            console.log('');
+            
+            // Informações do navegador
+            console.group('🖥️ NAVEGADOR');
+            console.log('User Agent:', navigator.userAgent);
+            console.log('Plataforma:', navigator.platform);
+            console.log('Cookies habilitados:', navigator.cookieEnabled ? '✅ Sim' : '❌ Não');
+            console.log('Online:', navigator.onLine ? '✅ Sim' : '❌ Não');
+            console.log('Idioma:', navigator.language);
+            console.log('Largura da tela:', window.screen.width + 'x' + window.screen.height);
+            console.groupEnd();
+            console.log('');
+            
+            // Configuração do Firebase
+            console.group('🔥 FIREBASE CONFIG');
+            try {
+                const auth = window.firebaseAuth;
+                if (auth && auth.app && auth.app.options) {
+                    const config = auth.app.options;
+                    console.log('✅ Firebase inicializado');
+                    console.log('Project ID:', config.projectId);
+                    console.log('Auth Domain:', config.authDomain);
+                    console.log('API Key:', config.apiKey ? '✅ Configurado (' + config.apiKey.substring(0, 10) + '...)' : '❌ Não configurado');
+                    console.log('Storage Bucket:', config.storageBucket || 'Não configurado');
+                    console.log('Messaging Sender ID:', config.messagingSenderId || 'Não configurado');
+                    console.log('App ID:', config.appId ? '✅ Configurado' : '❌ Não configurado');
+                } else {
+                    console.error('❌ Firebase não inicializado corretamente');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao acessar Firebase config:', error.message);
+            }
+            console.groupEnd();
+            console.log('');
+            
+            // Estado de autenticação
+            console.group('🔐 AUTENTICAÇÃO');
+            try {
+                const auth = window.firebaseAuth;
+                const currentUser = auth?.currentUser;
+                
+                if (currentUser) {
+                    console.log('Status: ✅ LOGADO');
+                    console.log('');
+                    console.log('Informações do Usuário:');
+                    console.log('  👤 Nome:', currentUser.displayName || 'Não informado');
+                    console.log('  📧 Email:', currentUser.email || 'Não informado');
+                    console.log('  🆔 UID:', currentUser.uid);
+                    console.log('  📱 Telefone:', currentUser.phoneNumber || 'Não informado');
+                    console.log('  📸 Foto:', currentUser.photoURL ? '✅ Tem foto' : '❌ Sem foto');
+                    console.log('  ✅ Email verificado:', currentUser.emailVerified ? '✅ Sim' : '❌ Não');
+                    console.log('  🔐 Provider(s):', currentUser.providerData.map(p => p.providerId).join(', '));
+                    console.log('  📅 Criado em:', new Date(currentUser.metadata.creationTime).toLocaleString('pt-BR'));
+                    console.log('  🕒 Último login:', new Date(currentUser.metadata.lastSignInTime).toLocaleString('pt-BR'));
+                } else {
+                    console.log('Status: ❌ DESLOGADO');
+                    console.log('💡 Usuário precisa fazer login');
+                }
+                
+                console.log('');
+                console.log('Configuração do Auth:');
+                console.log('  Language Code:', auth?.languageCode || 'padrão (en)');
+                console.log('  Settings:', auth?.settings || 'padrão');
+                
+            } catch (error) {
+                console.error('❌ Erro ao verificar autenticação:', error.message);
+            }
+            console.groupEnd();
+            console.log('');
+            
+            // Verificar domínios autorizados
+            console.group('🌍 VERIFICAÇÃO DE DOMÍNIOS');
+            const hostname = window.location.hostname;
+            console.log('Domínio atual:', hostname);
+            console.log('');
+            
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                console.log('✅ Você está em localhost - certifique-se de que "localhost" está nos domínios autorizados');
+            } else {
+                console.log('📍 Você está em ambiente de produção');
+            }
+            
+            console.log('');
+            console.log('✅ Domínios que DEVEM estar autorizados no Firebase:');
+            console.log('   - localhost (para desenvolvimento)');
+            console.log('   - ' + hostname + ' (domínio atual)');
+            console.log('');
+            console.log('📋 Para verificar/adicionar domínios autorizados:');
+            
+            try {
+                const projectId = window.firebaseAuth?.app?.options?.projectId;
+                if (projectId) {
+                    const consoleUrl = 'https://console.firebase.google.com/project/' + projectId + '/authentication/settings';
+                    console.log('   ' + consoleUrl);
+                } else {
+                    console.log('   https://console.firebase.google.com (navegue até seu projeto)');
+                }
+            } catch (error) {
+                console.log('   https://console.firebase.google.com (navegue até seu projeto)');
+            }
+            
+            console.log('');
+            console.log('⚙️ No Firebase Console:');
+            console.log('   1. Clique em "Authentication"');
+            console.log('   2. Vá em "Settings" ou "Configurações"');
+            console.log('   3. Role até "Authorized domains" ou "Domínios autorizados"');
+            console.log('   4. Clique em "Add domain" ou "Adicionar domínio"');
+            console.log('   5. Adicione: ' + hostname);
+            console.groupEnd();
+            console.log('');
+            
+            // Verificar providers habilitados
+            console.group('🔑 PROVIDERS DE AUTENTICAÇÃO');
+            console.log('Para verificar quais providers estão habilitados:');
+            try {
+                const projectId = window.firebaseAuth?.app?.options?.projectId;
+                if (projectId) {
+                    const providersUrl = 'https://console.firebase.google.com/project/' + projectId + '/authentication/providers';
+                    console.log('   ' + providersUrl);
+                } else {
+                    console.log('   Acesse Firebase Console → Authentication → Sign-in method');
+                }
+            } catch (error) {
+                console.log('   Acesse Firebase Console → Authentication → Sign-in method');
+            }
+            console.log('');
+            console.log('✅ Certifique-se de que os seguintes providers estão HABILITADOS:');
+            console.log('   - Email/Password (se usar login por email)');
+            console.log('   - Google (se usar login com Google)');
+            console.groupEnd();
+            console.log('');
+            
+            // Testes de conectividade
+            console.group('🔌 CONECTIVIDADE');
+            console.log('Testando conexão com Firebase...');
+            
+            // Verificar se consegue acessar Firestore
+            try {
+                const db = window.firebaseDb;
+                if (db) {
+                    console.log('✅ Firestore inicializado');
+                } else {
+                    console.error('❌ Firestore não disponível');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao acessar Firestore:', error.message);
+            }
+            
+            // Verificar se consegue acessar Auth
+            try {
+                const auth = window.firebaseAuth;
+                if (auth) {
+                    console.log('✅ Auth inicializado');
+                } else {
+                    console.error('❌ Auth não disponível');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao acessar Auth:', error.message);
+            }
+            
+            console.groupEnd();
+            console.log('');
+            
+            // Resumo e próximos passos
+            console.group('📝 RESUMO E PRÓXIMOS PASSOS');
+            
+            const currentUser = window.firebaseAuth?.currentUser;
+            const hostname2 = window.location.hostname;
+            
+            if (currentUser) {
+                console.log('✅ Tudo OK! Você está logado como:', currentUser.displayName || currentUser.email);
+            } else {
+                console.log('ℹ️ Você não está logado');
+                console.log('');
+                console.log('Para fazer login:');
+                console.log('1. Certifique-se de que o domínio "' + hostname2 + '" está autorizado no Firebase');
+                console.log('2. Certifique-se de que o provider (Google/Email) está habilitado');
+                console.log('3. Tente fazer login novamente');
+                console.log('');
+                console.log('Se o erro persistir:');
+                console.log('- Limpe o cache do navegador (Ctrl+Shift+Delete)');
+                console.log('- Tente em modo anônimo/privado');
+                console.log('- Tente em outro navegador');
+                console.log('- Verifique se cookies de terceiros estão habilitados');
+            }
+            
+            console.groupEnd();
+            console.log('');
+            console.log('═══════════════════════════════════════════');
+            console.log('✅ Diagnóstico completo!');
+            console.log('═══════════════════════════════════════════');
+            
+            // Mostrar alert com resumo
+            let alertMessage = '✅ Diagnóstico Completo!\n\n';
+            alertMessage += '📊 RESUMO:\n';
+            alertMessage += '━━━━━━━━━━━━━━━━━━\n';
+            alertMessage += '🌐 URL: ' + window.location.hostname + '\n';
+            alertMessage += '🔥 Firebase: ' + (window.firebaseAuth ? '✅ OK' : '❌ Erro') + '\n';
+            alertMessage += '🔐 Status: ' + (currentUser ? '✅ Logado (' + (currentUser.displayName || currentUser.email) + ')' : '❌ Deslogado') + '\n';
+            alertMessage += '🍪 Cookies: ' + (navigator.cookieEnabled ? '✅ Habilitados' : '❌ Desabilitados') + '\n';
+            alertMessage += '\n📋 Verifique o CONSOLE para detalhes completos!\n';
+            alertMessage += '\n💡 Pressione F12 para abrir o console';
+            
+            alert(alertMessage);
+        }
+
+        // Tornar a função disponível globalmente
+        window.diagnosticarFirebase = diagnosticarFirebase;
+
+        console.log('✅ Função diagnosticarFirebase() carregada e disponível');
+
+        // Adicionar listener para Ctrl+Shift+D
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+                event.preventDefault();
+                diagnosticarFirebase();
+            }
+        });
+
+        console.log('💡 Dica: Pressione Ctrl+Shift+D para diagnóstico rápido');
 
         // ========================================
         // 🚀 INICIALIZAÇÃO DO APP - v2.4.0
@@ -3744,23 +4148,111 @@
                 });
             }
 
-            // Login com Google
+            // ═══════════════════════════════════════════════════════════════════
+            // FUNÇÃO DE LOGIN COM GOOGLE - SISTEMA HÍBRIDO POPUP + REDIRECT
+            // ═══════════════════════════════════════════════════════════════════
             async function loginWithGoogle() {
+                console.log('🔐 Iniciando login com Google...');
+                
+                // Adicionar escopos necessários
+                window.firebaseProvider.addScope('profile');
+                window.firebaseProvider.addScope('email');
+                
+                // Configurações adicionais para melhor compatibilidade
+                window.firebaseProvider.setCustomParameters({
+                    prompt: 'select_account' // Always show account selection
+                });
+                
                 try {
-                    showLoading(); // Mostrar loading durante o login
-                    console.log('🔐 Iniciando login...');
-                    console.log('Auth:', window.firebaseAuth);
-                    console.log('Provider:', window.firebaseProvider);
+                    console.log('🪟 Tentando login via POPUP...');
+                    
+                    // PRIMEIRA TENTATIVA: POPUP (mais confiável)
                     const result = await window.firebaseAuthMethods.signInWithPopup(window.firebaseAuth, window.firebaseProvider);
-                    currentUser = result.user;
-                    console.log('✅ Login bem-sucedido:', currentUser.email);
-                    // O onAuthStateChanged vai cuidar de mostrar o app
-                } catch (error) {
-                    console.error('❌ Erro no login:', error);
-                    console.error('Código do erro:', error.code);
-                    console.error('Mensagem:', error.message);
-                    showLogin(); // Voltar para login em caso de erro
-                    showModal(`Erro ao fazer login: ${error.message}\n\nVerifique:\n1. Autenticação Google habilitada no Firebase\n2. Domínio autorizado no Firebase Console\n3. Conexão com internet`);
+                    
+                    console.log('✅ Login com POPUP bem-sucedido!');
+                    console.log('👤 Usuário:', result.user.displayName);
+                    console.log('📧 Email:', result.user.email);
+                    console.log('🆔 UID:', result.user.uid);
+                    
+                    // onAuthStateChanged will handle showing the app
+                    return result;
+                    
+                } catch (popupError) {
+                    console.warn('⚠️ Popup falhou, tentando REDIRECT...');
+                    console.warn('Motivo do erro do popup:', popupError.code, popupError.message);
+                    
+                    // Verificar se é erro de popup bloqueado ou COOP
+                    if (
+                        popupError.code === 'auth/popup-blocked' ||
+                        popupError.code === 'auth/popup-closed-by-user' ||
+                        popupError.message.includes('Cross-Origin-Opener-Policy') ||
+                        popupError.message.includes('window.closed')
+                    ) {
+                        console.log('🔄 Mudando para método REDIRECT...');
+                        
+                        try {
+                            showLoading(); // Mostrar loading durante o redirect
+                            // SEGUNDA TENTATIVA: REDIRECT (fallback)
+                            await window.firebaseAuthMethods.signInWithRedirect(window.firebaseAuth, window.firebaseProvider);
+                            console.log('🔄 Redirecionando para Google...');
+                            // Página será recarregada, resultado capturado no getRedirectResult
+                            
+                        } catch (redirectError) {
+                            console.error('❌ REDIRECT também falhou:', redirectError);
+                            
+                            // Verificar se é problema de domínio não autorizado
+                            if (redirectError.code === 'auth/unauthorized-domain') {
+                                alert(
+                                    '⚠️ ERRO DE CONFIGURAÇÃO!\n\n' +
+                                    'Este domínio não está autorizado no Firebase.\n\n' +
+                                    'SOLUÇÃO:\n' +
+                                    '1. Acesse: https://console.firebase.google.com/project/zele-teste/authentication/settings\n' +
+                                    '2. Vá em "Authorized domains"\n' +
+                                    '3. Adicione o domínio: ' + window.location.hostname + '\n\n' +
+                                    'Entre em contato com o administrador.'
+                                );
+                            } else {
+                                alert(
+                                    '❌ Erro ao fazer login com Google.\n\n' +
+                                    'Detalhes: ' + redirectError.message + '\n\n' +
+                                    'Por favor, tente:\n' +
+                                    '1. Desabilitar bloqueadores de popup\n' +
+                                    '2. Permitir cookies de terceiros\n' +
+                                    '3. Usar outro navegador\n' +
+                                    '4. Fazer login por email e senha'
+                                );
+                            }
+                            
+                            showLogin(); // Voltar para login em caso de erro
+                            throw redirectError;
+                        }
+                        
+                    } else {
+                        // Outro tipo de erro
+                        console.error('❌ Erro não tratado:', popupError);
+                        
+                        let mensagemErro = 'Erro ao fazer login com Google.';
+                        
+                        switch(popupError.code) {
+                            case 'auth/account-exists-with-different-credential':
+                                mensagemErro = 'Esta conta já existe com outro método de login.\nUse o método original.';
+                                break;
+                            case 'auth/cancelled-popup-request':
+                                mensagemErro = 'Requisição cancelada. Tente novamente.';
+                                break;
+                            case 'auth/operation-not-allowed':
+                                mensagemErro = 'Login com Google não está habilitado.\nEntre em contato com o administrador.';
+                                break;
+                            case 'auth/unauthorized-domain':
+                                mensagemErro = 'Este domínio não está autorizado.\nEntre em contato com o administrador.\n\nDomínio atual: ' + window.location.hostname;
+                                break;
+                            default:
+                                mensagemErro = popupError.message;
+                        }
+                        
+                        alert('❌ ' + mensagemErro);
+                        throw popupError;
+                    }
                 }
             }
 
@@ -6365,6 +6857,7 @@
                     
                     // Event listeners
                     setupManualScaleListeners();
+                    setupAddVolunteerModalListeners();
                 } catch (error) {
                     console.error('❌ Erro ao inicializar painel:', error);
                     showModal('❌ Erro ao carregar painel');
@@ -6435,7 +6928,30 @@
                 if (!list) return;
                 
                 if (volunteers.length === 0) {
-                    list.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum voluntário encontrado</p>';
+                    const searchInput = document.getElementById('manual-scale-volunteer-search');
+                    const searchQuery = searchInput ? searchInput.value.trim() : '';
+                    
+                    if (searchQuery) {
+                        // Mostrar botão para incluir novo voluntário
+                        list.innerHTML = `
+                            <div class="text-center py-8">
+                                <p class="text-gray-500 mb-4">Nenhum voluntário encontrado com "${searchQuery}"</p>
+                                <button id="add-new-volunteer-btn" class="zele-btn text-white font-bold py-3 px-6 rounded-lg">
+                                    ➕ Incluir Novo Voluntário
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Event listener para o botão de incluir
+                        const addBtn = document.getElementById('add-new-volunteer-btn');
+                        if (addBtn) {
+                            addBtn.addEventListener('click', () => {
+                                openAddNewVolunteerModal(searchQuery);
+                            });
+                        }
+                    } else {
+                        list.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum voluntário encontrado</p>';
+                    }
                     return;
                 }
                 
@@ -6719,6 +7235,211 @@
                 } catch (error) {
                     console.error('❌ Erro ao salvar escala:', error);
                     showModal('❌ Erro ao criar escala: ' + error.message);
+                }
+            }
+
+            // Abrir modal de adicionar novo voluntário
+            function openAddNewVolunteerModal(suggestedName = '') {
+                const modal = document.getElementById('add-volunteer-modal');
+                const nameInput = document.getElementById('new-volunteer-name');
+                const emailInput = document.getElementById('new-volunteer-email');
+                
+                if (!modal || !nameInput || !emailInput) return;
+                
+                // Preencher sugestão de nome se disponível
+                nameInput.value = suggestedName;
+                emailInput.value = '';
+                
+                // Mostrar modal
+                modal.classList.add('show');
+                
+                // Focar no campo apropriado
+                if (suggestedName) {
+                    emailInput.focus();
+                } else {
+                    nameInput.focus();
+                }
+            }
+            
+            // Fechar modal de adicionar voluntário
+            function closeAddNewVolunteerModal() {
+                const modal = document.getElementById('add-volunteer-modal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+            }
+            
+            // Salvar novo voluntário no Firestore
+            async function saveNewVolunteer() {
+                try {
+                    const nameInput = document.getElementById('new-volunteer-name');
+                    const emailInput = document.getElementById('new-volunteer-email');
+                    
+                    if (!nameInput || !emailInput) return;
+                    
+                    const name = nameInput.value.trim();
+                    const email = emailInput.value.trim().toLowerCase();
+                    
+                    // Validar campos obrigatórios - apenas nome é obrigatório
+                    if (!name) {
+                        showModal('❌ Por favor, informe o nome do voluntário');
+                        nameInput.focus();
+                        return;
+                    }
+                    
+                    // Se email foi fornecido, validar formato
+                    if (email && email !== '') {
+                        // Validar formato de email
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(email)) {
+                            showModal('❌ Email inválido. Por favor, corrija ou deixe em branco.');
+                            emailInput.focus();
+                            return;
+                        }
+                    }
+                    
+                    console.log('💾 Salvando novo voluntário...');
+                    
+                    const { collection, getDocs, doc, setDoc } = window.firestoreMethods;
+                    
+                    // Se email não foi fornecido, gerar email fictício
+                    let finalEmail = email;
+                    if (!email || email === '') {
+                        // Criar email fictício baseado no nome
+                        let namePart = name.toLowerCase()
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+                            .replace(/\s+/g, '-') // Substitui espaços por hífens
+                            .replace(/[^a-z0-9-]/g, '') // Remove caracteres especiais
+                            .replace(/^-+|-+$/g, ''); // Remove hífens no início e fim
+                        
+                        // Fallback se o nome não produziu caracteres válidos
+                        if (!namePart || namePart === '') {
+                            namePart = 'voluntario';
+                        }
+                        
+                        // Adicionar timestamp para garantir unicidade
+                        const timestamp = Date.now();
+                        finalEmail = `${namePart}-${timestamp}@sem-email.local`;
+                        console.log('📧 Email não fornecido, usando fictício:', finalEmail);
+                    }
+                    
+                    // Verificar se email já existe (buscar todos os usuários e comparar case-insensitive)
+                    const usersRef = collection(window.firebaseDb, 'users');
+                    const allUsersSnapshot = await getDocs(usersRef);
+                    
+                    // Verificar se já existe um email igual (case-insensitive)
+                    let emailExists = false;
+                    allUsersSnapshot.forEach((doc) => {
+                        const userData = doc.data();
+                        if (userData.email && userData.email.toLowerCase() === finalEmail) {
+                            emailExists = true;
+                        }
+                    });
+                    
+                    if (emailExists) {
+                        showModal('❌ Já existe um voluntário cadastrado com este email');
+                        emailInput.focus();
+                        return;
+                    }
+                    
+                    // Verificar se currentUser está disponível
+                    if (!currentUser || !currentUser.uid) {
+                        showModal('❌ Erro: sessão de usuário não encontrada. Por favor, faça login novamente.');
+                        return;
+                    }
+                    
+                    // Gerar ID único para o voluntário usando Firestore auto-generated ID
+                    const newVolunteerRef = doc(collection(window.firebaseDb, 'users'));
+                    const volunteerId = newVolunteerRef.id;
+                    
+                    // Criar documento do voluntário
+                    const volunteerData = {
+                        displayName: name,
+                        email: finalEmail,
+                        role: 'volunteer',
+                        status: 'pre_registered', // Status especial para voluntários pré-cadastrados
+                        hasEmailAccess: !!email, // Flag para saber se tem email real
+                        isManuallyCreated: true, // Flag para identificar cadastro manual
+                        createdAt: new Date().toISOString(),
+                        createdBy: currentUser.uid,
+                        createdByEmail: currentUser.email,
+                        createdByName: currentUser.displayName
+                    };
+                    
+                    // Salvar no Firestore - FIX: usar 'doc' em vez de 'docFunction'
+                    await setDoc(doc(window.firebaseDb, 'users', volunteerId), volunteerData);
+                    
+                    console.log('✅ Novo voluntário salvo com sucesso!');
+                    
+                    // Log de auditoria
+                    await logAudit('NEW_VOLUNTEER_ADDED', {
+                        volunteerName: name,
+                        volunteerEmail: email,
+                        volunteerId: volunteerId,
+                        addedBy: currentUser.displayName
+                    });
+                    
+                    // Fechar modal
+                    closeAddNewVolunteerModal();
+                    
+                    // Mostrar mensagem de sucesso
+                    showModal(
+                        `✅ Voluntário incluído com sucesso!<br><br><strong>${name}</strong> foi adicionado ao sistema e já pode ser escalado.`,
+                        false,
+                        null,
+                        false,
+                        async () => {
+                            // Recarregar lista de voluntários
+                            await loadVolunteersForManualScale();
+                            
+                            // Selecionar automaticamente o voluntário recém-criado
+                            selectVolunteerForManualScale(volunteerId);
+                        }
+                    );
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar voluntário:', error);
+                    showModal('❌ Erro ao incluir voluntário: ' + error.message);
+                }
+            }
+            
+            // Setup dos event listeners para o modal de adicionar voluntário
+            function setupAddVolunteerModalListeners() {
+                const closeBtn = document.getElementById('close-add-volunteer-modal');
+                const cancelBtn = document.getElementById('cancel-add-volunteer-btn');
+                const confirmBtn = document.getElementById('confirm-add-volunteer-btn');
+                const modal = document.getElementById('add-volunteer-modal');
+                
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', closeAddNewVolunteerModal);
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', closeAddNewVolunteerModal);
+                }
+                
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', saveNewVolunteer);
+                }
+                
+                // Fechar modal ao clicar fora
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            closeAddNewVolunteerModal();
+                        }
+                    });
+                }
+                
+                // Permitir Enter no email para salvar
+                const emailInput = document.getElementById('new-volunteer-email');
+                if (emailInput) {
+                    emailInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            saveNewVolunteer();
+                        }
+                    });
                 }
             }
 
@@ -10525,7 +11246,28 @@
 
             // Monitorar autenticação
             window.firebaseAuthMethods.onAuthStateChanged(window.firebaseAuth, async (user) => {
-                console.log('🔄 Estado de auth mudou:', user?.email || 'deslogado');
+                console.log('═══════════════════════════════════════════');
+                console.log('🔄 onAuthStateChanged DISPARADO');
+                console.log('═══════════════════════════════════════════');
+                
+                if (user) {
+                    console.log('✅ Estado: LOGADO');
+                    console.log('👤 Nome:', user.displayName);
+                    console.log('📧 Email:', user.email);
+                    console.log('🆔 UID:', user.uid);
+                    console.log('📱 Telefone:', user.phoneNumber || 'Não informado');
+                    console.log('📸 Foto:', user.photoURL || 'Sem foto');
+                    console.log('✅ Email verificado:', user.emailVerified);
+                    console.log('🔐 Provider:', user.providerData.map(p => p.providerId).join(', '));
+                    console.log('📅 Criado em:', new Date(user.metadata.creationTime).toLocaleString('pt-BR'));
+                    console.log('🕒 Último login:', new Date(user.metadata.lastSignInTime).toLocaleString('pt-BR'));
+                } else {
+                    console.log('❌ Estado: DESLOGADO');
+                    console.log('💡 Usuário precisa fazer login');
+                }
+                
+                console.log('═══════════════════════════════════════════');
+                
                 currentUser = user;
 
                 if (user) {
@@ -10550,9 +11292,10 @@
                     setupInstallButton();
                     
                     // 4. Verificar onboarding (pode ser feito depois)
-                    setTimeout(async () => {
-                        await checkOnboarding(user);
-                    }, 500);
+                    // DISABLED: Modal de onboarding desabilitado
+                    // setTimeout(async () => {
+                    //     await checkOnboarding(user);
+                    // }, 500);
                     
                     // 5. Verificar check-in de voluntários (para líderes)
                     setTimeout(async () => {
@@ -11875,3 +12618,4 @@ PERGUNTA DO USUÁRIO: ${question}`;
     </script>
 </body>
 </html>
+
