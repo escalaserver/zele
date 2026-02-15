@@ -5,7 +5,6 @@ const CACHE_NAME = 'zele-server-v2.3.0';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/zele-church-escalas.html',
   'https://cdn.tailwindcss.com',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
@@ -18,12 +17,20 @@ self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker: Instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
+      .then(async (cache) => {
         console.log('📦 Service Worker: Cache aberto');
-        return cache.addAll(urlsToCache.map(url => new Request(url, {cache: 'reload'})))
-          .catch((error) => {
-            console.warn('⚠️ Alguns recursos não foram cacheados:', error);
-          });
+        
+        // Cachear recursos individualmente para evitar falha total
+        const cachePromises = urlsToCache.map(async (url) => {
+          try {
+            await cache.add(new Request(url, {cache: 'reload'}));
+            console.log('✅ Cacheado:', url);
+          } catch (error) {
+            console.warn('⚠️ Falha ao cachear:', url, error.message);
+          }
+        });
+        
+        return Promise.all(cachePromises);
       })
   );
   self.skipWaiting();
@@ -94,3 +101,5 @@ self.addEventListener('fetch', (event) => {
 });
 
 console.log('🚀 Service Worker carregado');
+
+
